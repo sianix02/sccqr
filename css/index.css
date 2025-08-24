@@ -1,0 +1,162 @@
+       /* CSS Variables */
+        :root {
+            --primary-blue: #0066cc;
+            --dark-blue: #004080;
+            --light-blue-bg: #f0f8ff;
+            --white: #ffffff;
+            --off-white: rgba(255, 255, 255, 0.9);
+            --hover-blue: #e6f2ff;
+            --logo-blue: #0066cc;
+            --shadow-blue: rgba(0, 70, 140, 0.3);
+        }
+
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-blue-bg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Login Container */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px var(--shadow-blue);
+            color: var(--white);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Header Section */
+        .login-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        /* Form Elements */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--off-white);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+            background-color: var(--white);
+        }
+
+        /* Button Styles */
+        .login-button {
+            padding: 12px;
+            background-color: var(--white);
+            color: var(--primary-blue);
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-button:hover {
+            background-color: var(--hover-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Footer Styles */
+        .login-footer {
+            margin-top: 30px;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        /* Logo Styles */
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logo-inner {
+            width: 50px;
+            height: 50px;
+            background-color: var(--logo-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .logo-inner img{
+          width: 100%;
+        }
+
+        #notif{
+            width: 100%;
+            text-align: center;
+            color: red;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
