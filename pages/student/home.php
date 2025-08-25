@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="images/logo.png">
     <title>Student Dashboard - SCC Extracurricular Attendance</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
-    <link rel="stylesheet" href="../../css/student_home.css">
+    <!-- QR Code Scanner Library -->
+     <link rel="stylesheet" href="../../css/student-home.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
+    <!-- jQuery -->
+    <script src="../../script/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -16,7 +18,7 @@
             <div class="header-left">
                 <div class="logo">
                     <div class="logo-inner">
-                        <img src="../../images/logo.png" alt="scc_logo" srcset="">
+                        <img src="../../images/logo.png" alt="" srcset="">
                     </div>
                 </div>
                 <div class="header-text">
@@ -44,8 +46,8 @@
                     <h2 class="card-title">QR Code Scanner</h2>
                 </div>
                 <div class="qr-scanner-container">
-                    <video id="video" class="hidden"></video>
-                    <canvas id="canvas" class="hidden"></canvas>
+                    <!-- QR Reader container - this will be populated by html5-qrcode -->
+                    <div id="qr-reader" class="hidden"></div>
                     
                     <div class="scanner-controls">
                         <button class="btn btn-primary" id="startScanBtn">Start Scanning</button>
@@ -67,15 +69,15 @@
                 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="totalEvents">24</div>
+                        <div class="stat-number" id="totalEvents">5</div>
                         <div class="stat-label">Total Events</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="presentCount">20</div>
+                        <div class="stat-number" id="presentCount">3</div>
                         <div class="stat-label">Present</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="absentCount">3</div>
+                        <div class="stat-number" id="absentCount">1</div>
                         <div class="stat-label">Absent</div>
                     </div>
                     <div class="stat-card">
@@ -86,7 +88,7 @@
 
                 <div style="text-align: center; margin-top: 20px;">
                     <div style="font-size: 24px; font-weight: bold; color: var(--success-green);">
-                        83% Attendance Rate
+                        <span id="attendanceRate">60%</span> Attendance Rate
                     </div>
                 </div>
             </div>
@@ -111,47 +113,13 @@
                         </tr>
                     </thead>
                     <tbody id="attendanceTableBody">
-                        <tr>
-                            <td>2025-08-23</td>
-                            <td>Basketball Practice</td>
-                            <td>3:00 PM</td>
-                            <td><span class="status-badge status-present">Present</span></td>
-                            <td>On time</td>
-                        </tr>
-                        <tr>
-                            <td>2025-08-22</td>
-                            <td>Chess Club Meeting</td>
-                            <td>2:15 PM</td>
-                            <td><span class="status-badge status-late">Late</span></td>
-                            <td>15 minutes late</td>
-                        </tr>
-                        <tr>
-                            <td>2025-08-21</td>
-                            <td>Drama Club Rehearsal</td>
-                            <td>--</td>
-                            <td><span class="status-badge status-absent">Absent</span></td>
-                            <td>Medical leave</td>
-                        </tr>
-                        <tr>
-                            <td>2025-08-20</td>
-                            <td>Student Council Meeting</td>
-                            <td>1:00 PM</td>
-                            <td><span class="status-badge status-present">Present</span></td>
-                            <td>On time</td>
-                        </tr>
-                        <tr>
-                            <td>2025-08-19</td>
-                            <td>Science Club Experiment</td>
-                            <td>2:30 PM</td>
-                            <td><span class="status-badge status-present">Present</span></td>
-                            <td>On time</td>
-                        </tr>
+                        <!-- Data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-  <script src="../../script/student-home.js"></script>
+    <script src="../../script/student-home.js"></script>
 </body>
 </html>

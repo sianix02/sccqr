@@ -180,13 +180,17 @@
             text-align: center;
         }
 
-        #video {
-            width: 100%;
-            max-width: 300px;
-            height: auto;
-            border-radius: 8px;
+        #qr-reader {
+            width: 100% !important;
+            max-width: 350px !important;
+            margin: 0 auto 15px !important;
             border: 3px solid var(--primary-blue);
-            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #qr-reader video {
+            border-radius: 5px;
         }
 
         .scanner-controls {
@@ -252,7 +256,7 @@
             border: 1px solid #bee5eb;
         }
 
-        /* Attendance Report Styles */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -279,6 +283,7 @@
             opacity: 0.9;
         }
 
+        /* Attendance Table */
         .attendance-table {
             width: 100%;
             border-collapse: collapse;
@@ -332,21 +337,11 @@
             color: var(--white);
         }
 
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .container {
-                padding: 20px 15px;
-            }
-
-            .dashboard-grid {
-                gap: 20px;
-            }
-
-            .card {
-                padding: 20px;
-            }
+        .hidden {
+            display: none !important;
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -360,277 +355,30 @@
                 padding: 0 15px;
             }
 
-            .header-left {
-                flex-direction: column;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .header-left .logo {
-                margin-right: 0;
-                margin-bottom: 5px;
-            }
-
-            .header-text h1 {
-                font-size: 20px;
-            }
-
-            .header-text p {
-                font-size: 13px;
-            }
-
             .user-info {
                 flex-direction: row;
                 justify-content: space-between;
                 width: 100%;
                 max-width: 300px;
-                gap: 15px;
             }
 
-            .user-details {
-                text-align: left;
+            #qr-reader {
+                max-width: 280px !important;
             }
 
-            .user-name {
-                font-size: 14px;
+            .scanner-controls {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .user-id {
-                font-size: 11px;
-            }
-
-            .logout-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-
-            .container {
-                padding: 20px 10px;
-            }
-
-            .card {
-                padding: 15px;
-                border-radius: 8px;
-            }
-
-            .card-header {
-                margin-bottom: 15px;
-            }
-
-            .card-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 16px;
-                margin-right: 10px;
-            }
-
-            .card-title {
-                font-size: 18px;
+            .btn {
+                width: 100%;
+                max-width: 200px;
             }
 
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-                margin-bottom: 20px;
-            }
-
-            .stat-card {
-                padding: 15px 10px;
-            }
-
-            .stat-number {
-                font-size: 24px;
-            }
-
-            .stat-label {
-                font-size: 11px;
-            }
-
-            #video {
-                max-width: 250px;
-            }
-
-            .scanner-controls {
-                flex-direction: column;
-                gap: 8px;
-                align-items: center;
-            }
-
-            .btn {
-                padding: 12px 20px;
-                font-size: 14px;
-                width: 100%;
-                max-width: 200px;
-            }
-
-            .scanner-status {
-                margin-top: 15px;
-                font-size: 13px;
-            }
-
-            .attendance-table {
-                font-size: 11px;
-            }
-
-            .attendance-table th,
-            .attendance-table td {
-                padding: 6px 8px;
-            }
-
-            .attendance-table th {
-                font-size: 12px;
-            }
-
-            .status-badge {
-                font-size: 10px;
-                padding: 3px 6px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 15px 0;
-            }
-
-            .header-content {
-                padding: 0 10px;
-            }
-
-            .logo {
-                width: 40px;
-                height: 40px;
-            }
-
-            .logo-inner {
-                width: 32px;
-                height: 32px;
-                font-size: 12px;
-            }
-
-            .header-text h1 {
-                font-size: 18px;
-            }
-
-            .header-text p {
-                font-size: 12px;
-            }
-
-            .user-info {
-                max-width: 280px;
-            }
-
-            .user-name {
-                font-size: 13px;
-            }
-
-            .user-id {
-                font-size: 10px;
-            }
-
-            .logout-btn {
-                padding: 5px 10px;
-                font-size: 11px;
-            }
-
-            .container {
-                padding: 15px 8px;
-            }
-
-            .card {
-                padding: 12px;
-            }
-
-            .card-title {
-                font-size: 16px;
-            }
-
-            .card-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 14px;
-                margin-right: 8px;
-            }
-
-            .stats-grid {
-                gap: 8px;
-            }
-
-            .stat-card {
-                padding: 12px 8px;
-            }
-
-            .stat-number {
-                font-size: 20px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-
-            #video {
-                max-width: 200px;
-            }
-
-            .btn {
-                padding: 10px 15px;
-                font-size: 13px;
-                max-width: 180px;
-            }
-
-            .attendance-table {
-                font-size: 10px;
-            }
-
-            .attendance-table th,
-            .attendance-table td {
-                padding: 4px 6px;
-            }
-
-            .attendance-table th {
-                font-size: 11px;
-            }
-
-            .status-badge {
-                font-size: 9px;
-                padding: 2px 4px;
-            }
-
-            /* Hide less important columns on very small screens */
-            .attendance-table th:nth-child(5),
-            .attendance-table td:nth-child(5) {
-                display: none;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 6px;
-            }
-
-            .stat-card {
-                padding: 10px;
-            }
-
-            .user-info {
-                flex-direction: column;
-                gap: 8px;
-                max-width: none;
-                width: 100%;
-            }
-
-            .user-details {
-                text-align: center;
-            }
-
-            /* Hide time column on very small screens */
-            .attendance-table th:nth-child(3),
-            .attendance-table td:nth-child(3) {
-                display: none;
-            }
-
-            #video {
-                max-width: 180px;
             }
         }
 
@@ -643,85 +391,5 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
-            }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Touch-friendly enhancements */
-        @media (hover: none) and (pointer: coarse) {
-            .btn, .logout-btn {
-                min-height: 44px;
-                touch-action: manipulation;
-            }
-
-            .attendance-table th,
-            .attendance-table td {
-                min-height: 36px;
-            }
-
-            .card {
-                touch-action: pan-y;
-            }
-
-            /* Increase tap targets for mobile */
-            .scanner-controls .btn {
-                min-height: 48px;
-            }
-        }
-
-        /* Landscape orientation adjustments */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .dashboard-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-            }
-
-            .header {
-                padding: 10px 0;
-            }
-
-            .container {
-                padding: 15px 10px;
-            }
-
-            .card {
-                padding: 12px;
-            }
-
-            #video {
-                max-width: 200px;
-                max-height: 150px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
-            }
-
-            .stat-card {
-                padding: 10px 8px;
-            }
-
-            .stat-number {
-                font-size: 18px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-        }
-
-        /* Ultra-wide mobile screens */
-        @media (min-width: 390px) and (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-
-            #video {
-                max-width: 280px;
             }
         }
