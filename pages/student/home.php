@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="images/logo.png">
     <title>Student Dashboard - SCC Extracurricular Attendance</title>
     <!-- QR Code Scanner Library -->
-     <link rel="stylesheet" href="../../css/student-home.css">
+     <link rel="stylesheet" href="../../css/student_home.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
     <!-- jQuery -->
     <script src="../../script/jquery-3.7.1.min.js"></script>

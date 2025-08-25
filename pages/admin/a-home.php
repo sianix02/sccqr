@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="icon" type="image/png" href="../../images/logo.png">
     <title>Dashboard with Enhanced Analytics</title>
     <script src="../../script/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../../css/admin_home.css">
 </head>
@@ -160,7 +161,7 @@
                     
                     <div class="form-group">
                         <label for="max-participants">Maximum Participants</label>
-                        <input type="number" id="max-participants" placeholder="Enter maximum number of participants" min="1" max="1000">
+                        <input type="number" id="max-participants" placeholder="Enter maximum number of participants">
                     </div>
                     
                     <button type="submit" class="btn">Generate Event QR Code</button>
