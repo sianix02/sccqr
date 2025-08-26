@@ -288,8 +288,8 @@
             handleLogout() {
                 if (confirm('Are you sure you want to logout?')) {
                     this.stopScanning();
-                    // window.location.href = "../../index.php";
-                    alert('Logout successful! (Redirect disabled for demo)');
+                    window.location.href = "../../index.php";
+                    
                 }
             }
         }
