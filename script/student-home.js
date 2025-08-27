@@ -241,16 +241,7 @@
             }
 
             getActivityFromQR(qrText) {
-                // Extract activity from QR code
-                if (qrText.includes('BASKETBALL')) return 'Basketball Practice';
-                if (qrText.includes('CHESS')) return 'Chess Club Meeting';
-                if (qrText.includes('DRAMA')) return 'Drama Club Rehearsal';
-                if (qrText.includes('COUNCIL')) return 'Student Council Meeting';
-                if (qrText.includes('SCIENCE')) return 'Science Club Experiment';
-                if (qrText.includes('MUSIC')) return 'Music Band Practice';
-                if (qrText.includes('VOLLEYBALL')) return 'Volleyball Training';
-                
-                return 'Invalid Attendance';
+                return  qrText;
             }
 
             updateAttendanceStats() {

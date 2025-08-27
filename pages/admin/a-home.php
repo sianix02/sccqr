@@ -151,6 +151,8 @@
                             <option value="SEMINAR">Seminar</option>
                             <option value="COMPETITION">Competition</option>
                             <option value="CLUB">Club Meeting</option>
+                            <option value="CLUB">Program</option>
+
                         </select>
                     </div>
                     

@@ -326,94 +326,10 @@
                 enhancedChart.update('active');
             });
 
-            // Generate custom QR format like: SCC-BASKETBALL-2025, CHESS-CLUB-MEETING-AUG2025, etc.
-            function generateEventQRFormat(eventData) {
-                const eventName = eventData.name.toUpperCase();
-                const eventType = eventData.type;
-                const eventDate = new Date(eventData.date);
-                
-                // Clean and format event name (remove special characters, replace spaces with hyphens)
-                const cleanEventName = eventName
-                    .replace(/[^A-Z0-9\s]/g, '') // Remove special characters
-                    .replace(/\s+/g, '-')        // Replace spaces with hyphens
-                    .replace(/-+/g, '-');        // Replace multiple hyphens with single
-                
-                // Generate date suffix
-                const year = eventDate.getFullYear();
-                const month = eventDate.toLocaleString('en', { month: 'short' }).toUpperCase();
-                const day = String(eventDate.getDate()).padStart(2, '0');
-                
-                // Different formats based on event type and name
-                let qrFormat = '';
-                
-                if (eventType === 'BASKETBALL') {
-                    if (cleanEventName.includes('TOURNAMENT')) {
-                        qrFormat = `SCC-BASKETBALL-${year}`;
-                    } else {
-                        qrFormat = `BASKETBALL-TRAINING-${year}`;
-                    }
-                }
-                else if (eventType === 'CHESS') {
-                    if (cleanEventName.includes('CLUB') || cleanEventName.includes('MEETING')) {
-                        qrFormat = `CHESS-CLUB-MEETING-${month}${year}`;
-                    } else {
-                        qrFormat = `CHESS-TOURNAMENT-${year}`;
-                    }
-                }
-                else if (eventType === 'VOLLEYBALL') {
-                    qrFormat = `VOLLEYBALL-TRAINING-${year}`;
-                }
-                else if (eventType === 'STUDENT-COUNCIL') {
-                    qrFormat = `STUDENT-COUNCIL-SESSION`;
-                }
-                else if (eventType === 'WORKSHOP') {
-                    if (cleanEventName.includes('SCIENCE') || cleanEventName.includes('LAB')) {
-                        qrFormat = `SCIENCE-EXPERIMENT-LAB`;
-                    } else if (cleanEventName.includes('COMPUTER') || cleanEventName.includes('TECH')) {
-                        qrFormat = `TECH-WORKSHOP-${month}${year}`;
-                    } else {
-                        qrFormat = `WORKSHOP-${eventType}-${year}`;
-                    }
-                }
-                else if (eventType === 'SEMINAR') {
-                    if (cleanEventName.includes('CAREER')) {
-                        qrFormat = `CAREER-SEMINAR-${month}${year}`;
-                    } else {
-                        qrFormat = `SEMINAR-${month}${year}`;
-                    }
-                }
-                else if (eventType === 'DEBATE') {
-                    qrFormat = `DEBATE-COMPETITION-${year}`;
-                }
-                else if (eventType === 'COMPETITION') {
-                    if (cleanEventName.includes('DRAMA')) {
-                        qrFormat = `DRAMA-REHEARSAL-${year}${month}${day}`;
-                    } else if (cleanEventName.includes('MUSIC')) {
-                        qrFormat = `MUSIC-BAND-PRACTICE`;
-                    } else {
-                        qrFormat = `COMPETITION-${month}${year}`;
-                    }
-                }
-                else if (eventType === 'CLUB') {
-                    if (cleanEventName.includes('MUSIC') || cleanEventName.includes('BAND')) {
-                        qrFormat = `MUSIC-BAND-PRACTICE`;
-                    } else if (cleanEventName.includes('DRAMA') || cleanEventName.includes('THEATER')) {
-                        qrFormat = `DRAMA-REHEARSAL-${year}${month}${day}`;
-                    } else if (cleanEventName.includes('SCIENCE')) {
-                        qrFormat = `SCIENCE-EXPERIMENT-LAB`;
-                    } else {
-                        // Generic club format
-                        const clubName = cleanEventName.replace('-CLUB', '').replace('-MEETING', '');
-                        qrFormat = `${clubName}-CLUB-${month}${year}`;
-                    }
-                }
-                else {
-                    // Default format for other event types
-                    qrFormat = `${cleanEventName}-${year}`;
-                }
-                
-                return qrFormat;
-            }
+            // Global variables for event management
+            let currentEventData = null;
+            let currentSessionActive = false;
+            let attendanceData = [];
 
             // Enhanced attendance tracking
             function initializeAttendanceSession() {
@@ -428,10 +344,89 @@
                 }
             }
 
-            // Simulate QR code scanning (like test.php manual entry)
-            function simulateQRScan(studentName, qrCode) {
+            // Enhanced QR Code generation - simplified to use only event name
+            function generateQRCode(eventData) {
+                const qrContainer = document.getElementById('qr-code-container');
+                const qrTextElement = document.getElementById('qr-code-text');
+                
+                // Clear previous QR code
+                qrContainer.innerHTML = '';
+                
+                // Use only the event name as QR code data (simplified)
+                const qrCodeData = eventData.name.trim();
+                
+                if (typeof QRCode === 'undefined') {
+                    console.error('QRCode library not loaded.');
+                    qrContainer.innerHTML = '<p style="color: red;">QR Code library missing</p>';
+                    showToast('QR Code library not found', 'error');
+                    return;
+                }
+
+                // Generate QR code with enhanced styling
+                QRCode.toCanvas(qrCodeData, {
+                    width: 250,           // Increased size for better scanning
+                    height: 250,
+                    margin: 3,            // Better margin for scanning
+                    color: {
+                        dark: '#0066cc',  // Blue QR code to match theme
+                        light: '#FFFFFF'  // White background
+                    },
+                    errorCorrectionLevel: 'M',  // Medium error correction
+                    type: 'image/png',
+                    quality: 0.92,
+                    scale: 4              // Higher scale for crisp quality
+                }, function (error, canvas) {
+                    if (error) {
+                        console.error('QR Code generation failed:', error);
+                        qrContainer.innerHTML = '<p style="color: red;">Error generating QR code</p>';
+                        showToast('Failed to generate QR code', 'error');
+                        return;
+                    }
+                    
+                    // Style the canvas for better presentation
+                    canvas.style.borderRadius = '12px';
+                    canvas.style.boxShadow = '0 8px 25px rgba(0, 102, 204, 0.15)';
+                    canvas.style.border = '3px solid #f0f8ff';
+                    
+                    // Append canvas to container
+                    qrContainer.appendChild(canvas);
+                    
+                    // Display QR code data text (event name only)
+                    qrTextElement.textContent = qrCodeData;
+                    
+                    // Add additional event info display below QR text
+                    const eventInfoDiv = document.createElement('div');
+                    eventInfoDiv.style.marginTop = '15px';
+                    eventInfoDiv.style.padding = '12px';
+                    eventInfoDiv.style.backgroundColor = '#e8f4fd';
+                    eventInfoDiv.style.borderRadius = '8px';
+                    eventInfoDiv.style.fontSize = '14px';
+                    eventInfoDiv.style.color = '#004080';
+                    eventInfoDiv.innerHTML = `
+                        <strong>Event Details:</strong><br>
+                        <strong>Type:</strong> ${eventData.type}<br>
+                        <strong>Date:</strong> ${new Date(eventData.date).toLocaleString()}<br>
+                        <strong>Max Participants:</strong> ${eventData.maxParticipants || 'Unlimited'}
+                    `;
+                    
+                    // Insert after QR text element
+                    qrTextElement.parentNode.insertBefore(eventInfoDiv, qrTextElement.nextSibling);
+                    
+                    console.log('QR Code generated successfully with event name:', qrCodeData);
+                    showToast('QR Code generated successfully!', 'success');
+                });
+            }
+
+            // Updated simulateQRScan function to work with event names
+            function simulateQRScan(studentName, scannedEventName) {
                 if (!currentSessionActive) {
                     showToast('No active session. Please generate QR code first.', 'error');
+                    return;
+                }
+
+                // Verify the scanned QR matches current event
+                if (currentEventData && scannedEventName !== currentEventData.name) {
+                    showToast('Invalid QR code for this event!', 'error');
                     return;
                 }
 
@@ -440,7 +435,7 @@
                     id: Date.now(),
                     name: studentName,
                     sessionId: currentEventData.id,
-                    qrCode: qrCode,
+                    scannedEvent: scannedEventName,
                     timestamp: now.toISOString(),
                     date: now.toLocaleDateString(),
                     time: now.toLocaleTimeString()
@@ -463,7 +458,7 @@
                 return attendanceRecord;
             }
 
-            // Add attendance row to table
+            // Updated addAttendanceRow to show event name instead of random QR code
             function addAttendanceRow(record) {
                 const attendanceList = document.getElementById('attendance-list');
                 
@@ -478,7 +473,7 @@
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${record.time}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">STU-${String(attendanceData.length).padStart(3, '0')}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${record.name}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px;">${record.qrCode}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px;">${record.scannedEvent || 'N/A'}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">
                         <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Present</span>
                     </td>
@@ -511,10 +506,7 @@
                     createdAt: new Date().toISOString()
                 };
 
-                // Generate QR code data (simplified approach like test.php)
-                const qrCodeData = eventId; // Use event ID as QR data
-                
-                // Generate QR Code using the test.php approach
+                // Generate QR Code 
                 generateQRCode(currentEventData);
                 
                 // Initialize attendance session (like test.php)
@@ -535,59 +527,18 @@
                 return `EVT-${timestamp}-${randomNum}`;
             }
 
-            // Generate QR Code using QRCode.js library (inspired by test.php admin approach)
-            function generateQRCode(eventData) {
-                const qrContainer = document.getElementById('qr-code-container');
-                const qrTextElement = document.getElementById('qr-code-text');
-                
-                // Clear previous QR code
-                qrContainer.innerHTML = '';
-                
-                // Generate custom QR data format based on event details
-                const qrCodeData = generateEventQRFormat(currentEventData);
-                
-                if (typeof QRCode === 'undefined') {
-                    console.error('QRCode library not loaded.');
-                    qrContainer.innerHTML = '<p style="color: red;">QR Code library missing</p>';
-                    showToast('QR Code library not found', 'error');
-                    return;
-                }
-
-                // Generate QR code using the same approach as test.php
-                QRCode.toCanvas(qrCodeData, {
-                    width: 200,
-                    height: 200,
-                    margin: 2,
-                    color: {
-                        dark: '#0066cc',  // Blue QR code to match theme
-                        light: '#FFFFFF' // White background
-                    }
-                }, function (error, canvas) {
-                    if (error) {
-                        console.error('QR Code generation failed:', error);
-                        qrContainer.innerHTML = '<p style="color: red;">Error generating QR code</p>';
-                        showToast('Failed to generate QR code', 'error');
-                        return;
-                    }
-                    
-                    // Append canvas to container
-                    qrContainer.appendChild(canvas);
-                    
-                    // Display QR code data text
-                    qrTextElement.textContent = qrCodeData;
-                    
-                    console.log('QR Code generated successfully');
-                    showToast('QR Code generated successfully!', 'success');
-                });
-            }
-
-            // Download QR Code functionality
+            // Enhanced download functionality with better filename
             document.getElementById('download-qr').addEventListener('click', function() {
                 const canvas = document.querySelector('#qr-code-container canvas');
                 if (canvas) {
                     const link = document.createElement('a');
-                    link.download = `${currentEventData.name}-QRCode.png`;
-                    link.href = canvas.toDataURL();
+                    // Create filename from event name (sanitized)
+                    const sanitizedEventName = currentEventData.name
+                        .replace(/[^a-zA-Z0-9]/g, '-')
+                        .replace(/-+/g, '-')
+                        .toLowerCase();
+                    link.download = `${sanitizedEventName}-qr-code.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
                     link.click();
                     showToast('QR Code downloaded successfully!', 'success');
                 } else {
@@ -595,14 +546,26 @@
                 }
             });
 
-            // Copy QR Code data functionality
+            // Enhanced copy functionality - copies just the event name
             document.getElementById('copy-qr-code').addEventListener('click', function() {
                 const qrText = document.getElementById('qr-code-text').textContent;
                 navigator.clipboard.writeText(qrText).then(function() {
-                    showToast('QR Code data copied to clipboard!', 'success');
+                    showToast('Event name copied to clipboard!', 'success');
                 }).catch(function(err) {
                     console.error('Could not copy text: ', err);
-                    showToast('Failed to copy QR code data', 'error');
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = qrText;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('Event name copied to clipboard!', 'success');
+                    } catch (err) {
+                        showToast('Failed to copy event name', 'error');
+                    }
+                    document.body.removeChild(textArea);
                 });
             });
 
@@ -623,10 +586,46 @@
                 document.getElementById('event-form').style.display = 'block';
                 document.getElementById('qr-section').style.display = 'none';
                 
+                // Clear QR code container completely
+                const qrContainer = document.getElementById('qr-code-container');
+                qrContainer.innerHTML = '';
+                
+                // Clear QR code text
+                const qrTextElement = document.getElementById('qr-code-text');
+                qrTextElement.textContent = '';
+                
+                // Remove any additional event info elements that were added
+                const qrTextParent = qrTextElement.parentNode;
+                const eventInfoDivs = qrTextParent.querySelectorAll('div[style*="margin-top: 15px"]');
+                eventInfoDivs.forEach(div => div.remove());
+                
+                // Reset attendance table to initial state
+                const attendanceList = document.getElementById('attendance-list');
+                attendanceList.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Waiting for students to scan QR code...</td></tr>';
+                
+                // Reset attendance statistics
+                updateAttendanceStats(0, 0);
+                
+                // Clear event info display
+                const eventInfo = document.getElementById('event-info');
+                eventInfo.innerHTML = '';
+                
+                // Reset page titles
+                document.getElementById('attendance-event-title').textContent = 'Event Attendance';
+                document.getElementById('attendance-event-subtitle').textContent = 'Track student attendance for this event';
+                
                 // Reset session data
                 currentEventData = null;
                 currentSessionActive = false;
                 attendanceData = [];
+                
+                // Ensure we're on the start-event page
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById('start-event').classList.add('active');
+                
+                // Update navigation
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelector('[data-page="start-event"]').classList.add('active');
                 
                 showToast('Ready to create a new event', 'success');
             });
@@ -668,7 +667,7 @@
                 document.getElementById('attendance-rate').textContent = attendanceRate + '%';
             }
 
-            // Enhanced simulation with better logic (inspired by test.php)
+            // Enhanced simulation with event name validation
             function simulateAttendanceUpdates() {
                 const attendanceList = document.getElementById('attendance-list');
                 
@@ -687,10 +686,11 @@
                 const simulateNextStudent = () => {
                     if (currentIndex < Math.min(studentNames.length, 15)) { // Limit to 15 students for demo
                         const studentName = studentNames[currentIndex];
-                        const qrCode = `QR-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+                        // Use the actual event name from current event data
+                        const scannedEventName = currentEventData ? currentEventData.name : 'Sample Event';
                         
-                        // Simulate QR scan
-                        simulateQRScan(studentName, qrCode);
+                        // Simulate QR scan with event name
+                        simulateQRScan(studentName, scannedEventName);
                         
                         currentIndex++;
                         
@@ -727,10 +727,10 @@
                 }
             });
 
-            // Gather attendance data for export (enhanced)
+            // Updated export functionality to include event name in data
             function gatherAttendanceData() {
                 if (!currentEventData || !attendanceData.length) {
-                    return [['Time', 'Student ID', 'Name', 'QR Code', 'Status']];
+                    return [['Time', 'Student ID', 'Name', 'Event Name', 'Status']];
                 }
 
                 const data = [];
@@ -740,10 +740,11 @@
                 data.push(['Event Type:', currentEventData.type]);
                 data.push(['Event Date:', new Date(currentEventData.date).toLocaleString()]);
                 data.push(['Session ID:', currentEventData.id]);
+                data.push(['QR Code Content:', currentEventData.name]); // Show what's in QR
                 data.push(['']); // Empty row
                 
                 // Add attendance header
-                data.push(['Time', 'Student ID', 'Name', 'QR Code', 'Status']);
+                data.push(['Time', 'Student ID', 'Name', 'Event Name', 'Status']);
                 
                 // Add attendance records
                 attendanceData.forEach((record, index) => {
@@ -751,7 +752,7 @@
                         record.time,
                         `STU-${String(index + 1).padStart(3, '0')}`,
                         record.name,
-                        record.qrCode,
+                        record.scannedEvent || currentEventData.name,
                         'Present'
                     ]);
                 });
@@ -800,7 +801,6 @@
                     }, 300);
                 }, 3000);
             }
-            // ===== END START EVENT FUNCTIONALITY =====
 
             // Handle logout confirmation
             document.querySelector('#logout .btn-danger').addEventListener('click', function() {
