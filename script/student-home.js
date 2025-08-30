@@ -2,41 +2,7 @@
         class AttendanceDataManager {
             constructor() {
                 this.attendanceData = [
-                    {
-                        date: '2025-08-23',
-                        activity: 'Basketball Practice',
-                        timeIn: '3:00 PM',
-                        status: 'present',
-                        remarks: 'On time'
-                    },
-                    {
-                        date: '2025-08-22',
-                        activity: 'Chess Club Meeting',
-                        timeIn: '2:15 PM',
-                        status: 'late',
-                        remarks: '15 minutes late'
-                    },
-                    {
-                        date: '2025-08-21',
-                        activity: 'Drama Club Rehearsal',
-                        timeIn: '--',
-                        status: 'absent',
-                        remarks: 'Medical leave'
-                    },
-                    {
-                        date: '2025-08-20',
-                        activity: 'Student Council Meeting',
-                        timeIn: '1:00 PM',
-                        status: 'present',
-                        remarks: 'On time'
-                    },
-                    {
-                        date: '2025-08-19',
-                        activity: 'Science Club Experiment',
-                        timeIn: '2:30 PM',
-                        status: 'present',
-                        remarks: 'On time'
-                    }
+                    //attendance logs
                 ];
             }
 
@@ -241,7 +207,28 @@
             }
 
             getActivityFromQR(qrText) {
-                return  qrText;
+                
+                    console.log('Original QR Code content:', qrText);
+
+                    if(qrText.includes('SIBONGA')){
+
+                        // Split by dash and get the middle part
+                        const parts = qrText.split('-');
+                        
+                        if (parts.length >= 3) {
+                            // Get everything except first (SIBONGA) and last (time) parts
+                            const middleParts = parts.slice(1, -1);
+                            const extractedText = middleParts.join('-');
+                            
+                            console.log('Extracted middle text:', extractedText);
+                            return extractedText;
+                        }
+                    }
+                    
+
+                    
+                    return 'Wrong QR Code Scanned';
+                                
             }
 
             updateAttendanceStats() {

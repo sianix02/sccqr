@@ -353,7 +353,7 @@
                 qrContainer.innerHTML = '';
                 
                 // Use only the event name as QR code data (simplified)
-                const qrCodeData = eventData.name.trim();
+                const qrCodeData = "SIBONGA-"+ (eventData.name.trim()).toUpperCase()+"-"+ new Date(eventData.date).toLocaleTimeString();
                 
                 if (typeof QRCode === 'undefined') {
                     console.error('QRCode library not loaded.');
@@ -391,7 +391,7 @@
                     // Append canvas to container
                     qrContainer.appendChild(canvas);
                     
-                    // Display QR code data text (event name only)
+                    // Display QR code data text
                     qrTextElement.textContent = qrCodeData;
                     
                     // Add additional event info display below QR text

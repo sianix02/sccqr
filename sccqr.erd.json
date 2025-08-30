@@ -10,7 +10,7 @@
     "show": 431,
     "database": 4,
     "databaseName": "",
-    "canvasType": "ERD",
+    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
     "language": 1,
     "tableNameCase": 4,
     "columnNameCase": 2,
@@ -196,84 +196,8 @@
       }
     },
     "relationshipEntities": {},
-    "indexEntities": {
-      "KyJgB8LuS1NdHri-NaEe6": {
-        "id": "KyJgB8LuS1NdHri-NaEe6",
-        "name": "",
-        "tableId": "kS7aboQiHgODxJI5pOu6K",
-        "indexColumnIds": [],
-        "seqIndexColumnIds": [],
-        "unique": false,
-        "meta": {
-          "updateAt": 1755925799335,
-          "createAt": 1755925799335
-        }
-      },
-      "cbTLhPbHfjRqRd7UPl8Dv": {
-        "id": "cbTLhPbHfjRqRd7UPl8Dv",
-        "name": "",
-        "tableId": "kS7aboQiHgODxJI5pOu6K",
-        "indexColumnIds": [
-          "iXwBM8K2r6DglkpCayUOE"
-        ],
-        "seqIndexColumnIds": [
-          "iXwBM8K2r6DglkpCayUOE"
-        ],
-        "unique": true,
-        "meta": {
-          "updateAt": 1755925817356,
-          "createAt": 1755925810738
-        }
-      },
-      "JH8dtwuy1doh4yTZh1eIR": {
-        "id": "JH8dtwuy1doh4yTZh1eIR",
-        "name": "",
-        "tableId": "kS7aboQiHgODxJI5pOu6K",
-        "indexColumnIds": [],
-        "seqIndexColumnIds": [],
-        "unique": true,
-        "meta": {
-          "updateAt": 1755925831362,
-          "createAt": 1755925831187
-        }
-      },
-      "z1sh0OympugtvoApn9dtr": {
-        "id": "z1sh0OympugtvoApn9dtr",
-        "name": "",
-        "tableId": "kS7aboQiHgODxJI5pOu6K",
-        "indexColumnIds": [],
-        "seqIndexColumnIds": [],
-        "unique": false,
-        "meta": {
-          "updateAt": 1755925832276,
-          "createAt": 1755925832276
-        }
-      },
-      "7lon7tZ9TRkZu3MotFmn2": {
-        "id": "7lon7tZ9TRkZu3MotFmn2",
-        "name": "",
-        "tableId": "kS7aboQiHgODxJI5pOu6K",
-        "indexColumnIds": [],
-        "seqIndexColumnIds": [],
-        "unique": false,
-        "meta": {
-          "updateAt": 1755925833003,
-          "createAt": 1755925833003
-        }
-      }
-    },
-    "indexColumnEntities": {
-      "iXwBM8K2r6DglkpCayUOE": {
-        "id": "iXwBM8K2r6DglkpCayUOE",
-        "indexId": "cbTLhPbHfjRqRd7UPl8Dv",
-        "columnId": "vCWA3pFxTvDugQBih76Vy",
-        "orderType": 1,
-        "meta": {
-          "updateAt": 1755925817356,
-          "createAt": 1755925817356
-        }
-      }
-    },
+    "indexEntities": {},
+    "indexColumnEntities": {},
     "memoEntities": {}
   }
 }
