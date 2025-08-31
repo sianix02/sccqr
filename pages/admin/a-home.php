@@ -142,16 +142,11 @@
                         <label for="event-type">Event Category</label>
                         <select id="event-type" required>
                             <option value="">Select event category</option>
-                            <option value="BASKETBALL">Basketball</option>
-                            <option value="VOLLEYBALL">Volleyball</option>
-                            <option value="CHESS">Chess</option>
-                            <option value="DEBATE">Debate</option>
-                            <option value="STUDENT-COUNCIL">Student Council</option>
-                            <option value="WORKSHOP">Workshop</option>
-                            <option value="SEMINAR">Seminar</option>
-                            <option value="COMPETITION">Competition</option>
-                            <option value="CLUB">Club Meeting</option>
-                            <option value="CLUB">Program</option>
+                            <option value="First">For First Year</option>
+                            <option value="Second">For Second Year</option>
+                            <option value="Third">For Third Year</option>
+                            <option value="Fourth">For Fourth Year</option>
+                            <option value="PROGRAM">Program</option>
 
                         </select>
                     </div>

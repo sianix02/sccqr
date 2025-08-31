@@ -266,14 +266,57 @@
             handleLogout() {
                 if (confirm('Are you sure you want to logout?')) {
                     this.stopScanning();
-                    window.location.href = "../../index.php";
+                    window.location.href = "../../sql_php/logout.php";
                     
                 }
             }
         }
 
+            
+            function getStudent() {
+                return $.ajax({
+                    url: '../../sql_php/data.php', // Fixed path: remove one ../
+                    type: 'GET', // Changed to GET since PHP uses session, not POST data
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            const student = response.student; // FIX: Define student variable
+                            
+                            // Update your HTML elements
+                            $('.user-name').text(student.first_name + ' ' + student.last_name);
+                            $('.user-id').eq(0).text('ID: ' + student.student_id);
+                            $('.user-set').text('Year & Set: ' + student.year_level + getYearSuffix(student.year_level) + '-' + student.student_set); // Fixed selector
+                            $('.user-course').text('Course: ' + student.course);
+                            $('.user-sex').text('Course: ' + student.sex);
+                            
+                            console.log('Student loaded:', response.student);
+                            return response.student;
+                        } else {
+                            console.error('Error:', response.error);
+                            
+                            // Handle error display
+                            $('.user-name').text('Error loading student');
+                            $('.user-id').eq(0).text('Error: ' + response.error);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        
+                        // Handle AJAX error display
+                        $('.user-name').text('Connection Error');
+                        $('.user-id').eq(0).text('Failed to connect to server');
+                    }
+                });
+            }
+
         // Initialize the application when document is ready
         $(document).ready(function() {
             const uiManager = new UIManager();
             console.log('Student Dashboard initialized successfully');
+            
+           
+            
+            // Load student data when page loads
+            getStudent();
+    
         });

@@ -104,7 +104,7 @@
             font-weight: 600;
         }
 
-        .user-id {
+        .user-id, .user-set, .user-sex {
             font-size: 12px;
             opacity: 0.8;
         }
@@ -380,6 +380,11 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
+            
+            .user-details{
+                text-align: left;
+            }
+
         }
 
         /* Animations */

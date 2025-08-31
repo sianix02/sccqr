@@ -1,3 +1,14 @@
+<?php
+session_start();
+
+    if (!isset($_SESSION['session_id'])) {
+        header('location: ../../index.php');
+        exit;
+    }
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +41,10 @@
                 <div class="user-details">
                     <div class="user-name">Juan Dela Cruz</div>
                     <div class="user-id">ID: 2024-001234</div>
+                    <div class="user-set">Year & Set: 2nd-A</div>
+                    <div class="user-sex">Sex: female</div>
+
+                   
                 </div>
                 <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>

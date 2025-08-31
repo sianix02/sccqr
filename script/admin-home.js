@@ -675,10 +675,7 @@
                 attendanceList.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Waiting for students to scan QR code...</td></tr>';
 
                 const studentNames = [
-                    'John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown',
-                    'Emily Davis', 'Chris Miller', 'Lisa Garcia', 'Kevin Martinez', 'Amy Rodriguez',
-                    'Daniel Lee', 'Jessica Taylor', 'Matthew Anderson', 'Ashley Thompson', 'Ryan White',
-                    'Hannah Martin', 'Brandon Clark', 'Samantha Lewis', 'Justin Hall', 'Megan Walker'
+                        //para students
                 ];
 
                 let currentIndex = 0;

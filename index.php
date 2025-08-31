@@ -1,5 +1,6 @@
 <?php
 include "sql_php/connection.php";
+session_start();
 
 if(isset($_POST['btn'])){
 
@@ -11,12 +12,13 @@ if(isset($_POST['btn'])){
     $id=(int) $textid;
 
 
-    $sql="SELECT * FROM `user` WHERE username=$id AND password='$password'";
+    $sql="SELECT * FROM `users` WHERE username=$id AND password='$password'";
     $login=$conn->query($sql);
 
     if($row=$login->fetch_assoc()){
         $user_id=$row['user_id'];
         $role= $row['role'];
+        $_SESSION['session_id']=$user_id;
 
         switch ($role){
             case 'admin':
@@ -24,6 +26,7 @@ if(isset($_POST['btn'])){
                 break;
             case 'student':
                 header("location: pages/student/home.php");
+                
                 break;
             default:
                 $message="error!";
