@@ -14,7 +14,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="icon" type="image/png" href="../../images/logo.png">
     <title>Student Dashboard - SCC Extracurricular Attendance</title>
     <!-- QR Code Scanner Library -->
      <link rel="stylesheet" href="../../css/student_home.css">
@@ -123,6 +123,7 @@ session_start();
                             <th>Date</th>
                             <th>Activity</th>
                             <th>Time In</th>
+                            <th>Time Out</th>
                             <th>Status</th>
                             <th>Remarks</th>
                         </tr>

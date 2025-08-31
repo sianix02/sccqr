@@ -2,6 +2,15 @@
         class AttendanceDataManager {
             constructor() {
                 this.attendanceData = [
+
+                {
+                    date: '2025-08-23',
+                    activity: 'STUDENT ASSEMBLY',
+                    timeIn: '3:00 PM',
+                    timeOut: '5:00 PM',
+                    status: 'absent',
+                    remarks: 'Not on time'
+                },
                     //attendance logs
                 ];
             }
@@ -175,6 +184,7 @@
                         date: now.toISOString().split('T')[0],
                         activity: this.getActivityFromQR(decodedText),
                         timeIn: timeString,
+                        timeOut: timeString,
                         status: 'present',
                         remarks: 'Scanned via QR'
                     };
@@ -255,6 +265,7 @@
                             <td>${record.date}</td>
                             <td>${record.activity}</td>
                             <td>${record.timeIn}</td>
+                            <td>${record.timeOut}</td>
                             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                             <td>${record.remarks}</td>
                         </tr>
@@ -275,7 +286,7 @@
             
             function getStudent() {
                 return $.ajax({
-                    url: '../../sql_php/data.php', // Fixed path: remove one ../
+                    url: '../../sql_php/user_data.php',
                     type: 'GET', // Changed to GET since PHP uses session, not POST data
                     dataType: 'json',
                     success: function(response) {
