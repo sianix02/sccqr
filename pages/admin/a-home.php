@@ -24,5 +24,6 @@
     </main>
 
     <script src="../../script/admin-home.js"></script>
+    <script src="../../script/student.js"></script>
 </body>
 </html>

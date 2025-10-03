@@ -4,46 +4,58 @@ session_start();
 
 if(isset($_POST['btn'])){
 
-    $textid=$_POST['id'];
-    $password=$_POST['password'];
+    $textid = $_POST['id'];
+    $password = $_POST['password'];
 
+    // Convert id to int
+    $id = (int) $textid;
 
-    //convert id to int
-    $id=(int) $textid;
+    // Get user from users table
+    $sql = "SELECT * FROM `users` WHERE username=$id AND password='$password'";
+    $login = $conn->query($sql);
 
-
-    $sql="SELECT * FROM `users` WHERE username=$id AND password='$password'";
-    $login=$conn->query($sql);
-
-    if($row=$login->fetch_assoc()){
-        $user_id=$row['user_id'];
-        $role= $row['role'];
-        $_SESSION['session_id']=$user_id;
-
+    if($row = $login->fetch_assoc()){
+        $user_id = $row['user_id'];
+        $role = $row['role'];
+        
+        // Store user_id in session
+        $_SESSION['session_id'] = $user_id;
+        $_SESSION['role'] = $role;
+        
         switch ($role){
             case 'admin':
                 header("location: pages/admin/a-home.php");
                 break;
-            case 'student':
-                header("location: pages/student/home.php");
                 
+            case 'student':
+                // IMPORTANT: Get student_id from student table and store in session
+                $student_sql = "SELECT student_id FROM `student` WHERE user_id = ?";
+                $student_stmt = $conn->prepare($student_sql);
+                $student_stmt->bind_param("i", $user_id);
+                $student_stmt->execute();
+                $student_result = $student_stmt->get_result();
+                
+                if($student_row = $student_result->fetch_assoc()){
+                    $_SESSION['student_id'] = $student_row['student_id'];
+                    $student_stmt->close();
+                    header("location: pages/student/home.php");
+                } else {
+                    $notice = "Student record not found. Please contact administrator.";
+                }
                 break;
+
+            case 'instructor':
+                header("location: pages/instructor/home.php");
+                break;
+                
             default:
-                $message="error!";
+                $message = "error!";
+            }
 
-        }
-        
-        
-
-    }else{
-        $notice="Invalid ID or Password";
+    } else {
+        $notice = "Invalid ID or Password";
     }
-
-
-   
 }
-
-
 ?>
 
 

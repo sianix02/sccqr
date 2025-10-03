@@ -5,8 +5,6 @@ session_start();
         header('location: ../../index.php');
         exit;
     }
-
-
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +15,7 @@ session_start();
     <link rel="icon" type="image/png" href="../../images/logo.png">
     <title>Student Dashboard - SCC Extracurricular Attendance</title>
     <!-- QR Code Scanner Library -->
-     <link rel="stylesheet" href="../../css/student_home.css">
+    <link rel="stylesheet" href="../../css/student_home.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
     <!-- jQuery -->
     <script src="../../script/jquery-3.7.1.min.js"></script>
@@ -42,9 +40,8 @@ session_start();
                     <div class="user-name">Juan Dela Cruz</div>
                     <div class="user-id">ID: 2024-001234</div>
                     <div class="user-set">Year & Set: 2nd-A</div>
-                    <div class="user-sex">Sex: female</div>
-
-                   
+                    <div class="user-course">Course: BSIT</div>
+                    <div class="user-sex">Sex: Male</div>
                 </div>
                 <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
@@ -65,8 +62,15 @@ session_start();
                     <div id="qr-reader" class="hidden"></div>
                     
                     <div class="scanner-controls">
-                        <button class="btn btn-primary" id="startScanBtn">Start Scanning</button>
-                        <button class="btn btn-secondary hidden" id="stopScanBtn">Stop Scanning</button>
+                        <button class="btn btn-primary" id="timeInBtn">
+                            📥 Time In
+                        </button>
+                        <button class="btn btn-success hidden" id="timeOutBtn">
+                            📤 Time Out
+                        </button>
+                        <button class="btn btn-secondary hidden" id="stopScanBtn">
+                            ⏹️ Stop Scanning
+                        </button>
                     </div>
                     
                     <div id="scanResult" class="scanner-status hidden">
@@ -84,26 +88,26 @@ session_start();
                 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="totalEvents">5</div>
+                        <div class="stat-number" id="totalEvents">0</div>
                         <div class="stat-label">Total Events</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="presentCount">3</div>
+                        <div class="stat-number" id="presentCount">0</div>
                         <div class="stat-label">Present</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="absentCount">1</div>
+                        <div class="stat-number" id="absentCount">0</div>
                         <div class="stat-label">Absent</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="lateCount">1</div>
+                        <div class="stat-number" id="lateCount">0</div>
                         <div class="stat-label">Late</div>
                     </div>
                 </div>
 
                 <div style="text-align: center; margin-top: 20px;">
                     <div style="font-size: 24px; font-weight: bold; color: var(--success-green);">
-                        <span id="attendanceRate">60%</span> Attendance Rate
+                        <span id="attendanceRate">0%</span> Attendance Rate
                     </div>
                 </div>
             </div>
@@ -124,12 +128,17 @@ session_start();
                             <th>Activity</th>
                             <th>Time In</th>
                             <th>Time Out</th>
-                            <th>Status</th>
                             <th>Remarks</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="attendanceTableBody">
                         <!-- Data will be populated by JavaScript -->
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px;">
+                                Loading attendance records...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

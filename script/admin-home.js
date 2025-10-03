@@ -812,3 +812,569 @@
                 document.getElementById('home').classList.add('active');
             });
         });
+
+// ============================================================
+    // STUDENT MANAGEMENT SYSTEM - ADD THIS BEFORE THE LAST });
+    // ============================================================
+    
+    // Student Management System with Database Integration
+    let studentsData = [];
+    let currentEditingStudent = null;
+    let studentToDelete = null;
+    let isLoadingStudents = false;
+
+    // Load students from database using NEW API endpoint
+    async function loadStudentsFromDatabase() {
+        if (isLoadingStudents) return;
+        
+        isLoadingStudents = true;
+        const tbody = document.getElementById('students-table-body');
+        
+        if (!tbody) {
+            isLoadingStudents = false;
+            return;
+        }
+        
+        // Show loading state
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="padding: 40px; text-align: center; color: #666;">
+                    <div class="loading-spinner" style="margin: 0 auto 10px;"></div>
+                    <p>Loading students from database...</p>
+                </td>
+            </tr>
+        `;
+        
+        try {
+            const response = await fetch('../../api/get_students_with_attendance.php');
+            const result = await response.json();
+            
+            if (result.success) {
+                studentsData = result.data;
+                renderStudentsTable();
+                updateStudentStats();
+                showToast(`Loaded ${result.total} students successfully`, 'success');
+            } else {
+                throw new Error(result.message || 'Failed to load students');
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 40px; text-align: center; color: #dc3545;">
+                        <p style="font-size: 18px; margin-bottom: 10px;">⚠️ Error Loading Students</p>
+                        <p style="margin-bottom: 15px;">${error.message}</p>
+                        <button class="btn" onclick="loadStudentsFromDatabase()">Retry</button>
+                    </td>
+                </tr>
+            `;
+            showToast('Failed to load students from database', 'error');
+        } finally {
+            isLoadingStudents = false;
+        }
+    }
+
+    // Initialize student management when page loads
+    function initializeStudentManagement() {
+        loadStudentsFromDatabase();
+        attachStudentEventListeners();
+    }
+
+    // Render students table
+    function renderStudentsTable(filteredData = null) {
+        const data = filteredData || studentsData;
+        const tbody = document.getElementById('students-table-body');
+        
+        if (!tbody) return;
+        
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 40px; text-align: center; color: #666;">
+                        <p style="font-size: 18px; margin-bottom: 10px;">📋 No students found</p>
+                        <p>Click "Add New Student" to get started</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = data.map(student => {
+            const attendanceCount = student.attendanceCount || student.attendance.length;
+            const totalEvents = getTotalEvents();
+            const attendanceRate = totalEvents > 0 
+                ? Math.round((attendanceCount / totalEvents) * 100) 
+                : (attendanceCount > 0 ? 100 : 0);
+            
+            const statusColor = student.status === 'Active' ? '#28a745' : '#dc3545';
+            
+            return `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.id}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.name}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.email}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.year} Year</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="flex: 1; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${attendanceRate}%; height: 100%; background: #0066cc; transition: width 0.3s;"></div>
+                            </div>
+                            <span style="font-size: 12px; font-weight: 600;">${attendanceCount} events</span>
+                        </div>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                        <span style="background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                            ${student.status}
+                        </span>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <button class="btn" style="font-size: 11px; padding: 6px 10px;" onclick="viewStudentDetails('${student.id}')">
+                                👁️ View
+                            </button>
+                            <button class="btn" style="font-size: 11px; padding: 6px 10px; background: #ffc107;" onclick="editStudent('${student.id}')">
+                                ✏️ Edit
+                            </button>
+                            <button class="btn btn-danger" style="font-size: 11px; padding: 6px 10px;" onclick="confirmDeleteStudent('${student.id}')">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Update statistics
+    function updateStudentStats() {
+        const totalStudents = studentsData.length;
+        const activeStudents = studentsData.filter(s => s.status === 'Active').length;
+        
+        let totalAttendanceEvents = 0;
+        studentsData.forEach(student => {
+            totalAttendanceEvents += (student.attendanceCount || 0);
+        });
+        const avgAttendance = totalStudents > 0 ? Math.round(totalAttendanceEvents / totalStudents) : 0;
+        
+        const totalEl = document.getElementById('total-students-count');
+        const activeEl = document.getElementById('active-students-count');
+        const avgEl = document.getElementById('avg-attendance');
+        
+        if (totalEl) totalEl.textContent = totalStudents;
+        if (activeEl) activeEl.textContent = activeStudents;
+        if (avgEl) avgEl.textContent = avgAttendance + ' events';
+    }
+
+    // Get total events (calculate from database)
+    function getTotalEvents() {
+        const uniqueEvents = new Set();
+        studentsData.forEach(student => {
+            student.attendance.forEach(record => {
+                uniqueEvents.add(record.event);
+            });
+        });
+        return uniqueEvents.size || 1;
+    }
+
+    // Attach event listeners
+    function attachStudentEventListeners() {
+        const addBtn = document.getElementById('add-student-btn');
+        const searchInput = document.getElementById('student-search');
+        const sortSelect = document.getElementById('sort-students');
+        const refreshBtn = document.getElementById('refresh-students');
+        
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                openStudentModal();
+            });
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                searchStudents(e.target.value);
+            });
+        }
+        
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                sortStudents(e.target.value);
+            });
+        }
+        
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                loadStudentsFromDatabase();
+                showToast('Refreshing student list...', 'success');
+            });
+        }
+        
+        // Modal close buttons
+        const closeModal = document.getElementById('close-modal');
+        const cancelModal = document.getElementById('cancel-modal');
+        const closeDetailsModal = document.getElementById('close-details-modal');
+        const closeDetailsBtn = document.getElementById('close-details-btn');
+        const cancelDelete = document.getElementById('cancel-delete');
+        
+        if (closeModal) closeModal.addEventListener('click', closeStudentModal);
+        if (cancelModal) cancelModal.addEventListener('click', closeStudentModal);
+        if (closeDetailsModal) closeDetailsModal.addEventListener('click', closeDetailsModal);
+        if (closeDetailsBtn) closeDetailsBtn.addEventListener('click', closeDetailsModal);
+        if (cancelDelete) cancelDelete.addEventListener('click', closeDeleteModal);
+        
+        // Form submission
+        const studentForm = document.getElementById('student-form');
+        if (studentForm) {
+            studentForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveStudent();
+            });
+        }
+        
+        // Delete confirmation
+        const confirmDelete = document.getElementById('confirm-delete');
+        if (confirmDelete) {
+            confirmDelete.addEventListener('click', deleteStudent);
+        }
+        
+        // Export student report
+        const exportBtn = document.getElementById('export-student-report');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportStudentReport);
+        }
+    }
+
+    // Open add/edit modal
+    function openStudentModal(student = null) {
+        currentEditingStudent = student;
+        const modal = document.getElementById('student-modal');
+        const title = document.getElementById('modal-title');
+        
+        if (!modal) return;
+        
+        if (student) {
+            title.textContent = 'Update Student Information';
+            document.getElementById('student-id-hidden').value = student.id;
+            document.getElementById('student-id-input').value = student.id;
+            document.getElementById('student-id-input').disabled = true;
+            document.getElementById('student-name').value = student.name;
+            document.getElementById('student-email').value = student.email;
+            document.getElementById('student-year').value = student.year;
+            document.getElementById('student-status').value = student.status;
+        } else {
+            title.textContent = 'Add New Student';
+            document.getElementById('student-form').reset();
+            document.getElementById('student-id-input').disabled = false;
+        }
+        
+        modal.style.display = 'block';
+    }
+
+    // Close student modal
+    function closeStudentModal() {
+        const modal = document.getElementById('student-modal');
+        if (modal) modal.style.display = 'none';
+        
+        const form = document.getElementById('student-form');
+        if (form) form.reset();
+        
+        currentEditingStudent = null;
+    }
+
+    // Save student (add or update) - Connected to database
+    async function saveStudent() {
+        const id = document.getElementById('student-id-input').value.trim();
+        const name = document.getElementById('student-name').value.trim();
+        const email = document.getElementById('student-email').value.trim();
+        const year = document.getElementById('student-year').value;
+        const status = document.getElementById('student-status').value;
+        
+        if (!id || !name || !year) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        const studentData = {
+            student_id: id,
+            first_name: firstName,
+            last_name: lastName,
+            year_level: year,
+            sex: 'Not Specified',
+            student_set: '',
+            course: '',
+            is_update: currentEditingStudent !== null
+        };
+        
+        try {
+            const submitBtn = document.querySelector('#student-form button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = currentEditingStudent ? 'Updating...' : 'Adding...';
+            
+            const response = await fetch('../../api/save_student.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(studentData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message, 'success');
+                closeStudentModal();
+                await loadStudentsFromDatabase();
+            } else {
+                throw new Error(result.error || 'Failed to save student');
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            
+        } catch (error) {
+            console.error('Error saving student:', error);
+            showToast('Error: ' + error.message, 'error');
+            
+            const submitBtn = document.querySelector('#student-form button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Student';
+            }
+        }
+    }
+
+    // Edit student
+    window.editStudent = function(studentId) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (student) {
+            openStudentModal(student);
+        }
+    }
+
+    // Confirm delete student
+    window.confirmDeleteStudent = function(studentId) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (student) {
+            studentToDelete = student;
+            const nameEl = document.getElementById('delete-student-name');
+            if (nameEl) nameEl.textContent = `${student.name} (${student.id})`;
+            
+            const modal = document.getElementById('delete-modal');
+            if (modal) modal.style.display = 'block';
+        }
+    }
+
+    // Delete student - Connected to database
+    async function deleteStudent() {
+        if (!studentToDelete) return;
+        
+        try {
+            const deleteBtn = document.getElementById('confirm-delete');
+            const originalText = deleteBtn.textContent;
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+            
+            const response = await fetch('../../api/delete_student.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    student_id: studentToDelete.id
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message + ' (' + result.deleted_attendance_records + ' attendance records removed)', 'success');
+                closeDeleteModal();
+                await loadStudentsFromDatabase();
+            } else {
+                throw new Error(result.error || 'Failed to delete student');
+            }
+            
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = originalText;
+            
+        } catch (error) {
+            console.error('Error deleting student:', error);
+            showToast('Error: ' + error.message, 'error');
+            
+            const deleteBtn = document.getElementById('confirm-delete');
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
+            }
+        }
+    }
+
+    // Close delete modal
+    function closeDeleteModal() {
+        const modal = document.getElementById('delete-modal');
+        if (modal) modal.style.display = 'none';
+        studentToDelete = null;
+    }
+
+    // View student details and attendance
+    window.viewStudentDetails = function(studentId) {
+        const student = studentsData.find(s => s.id === studentId);
+        if (!student) return;
+        
+        document.getElementById('detail-student-id').textContent = student.id;
+        document.getElementById('detail-student-name').textContent = student.name;
+        document.getElementById('detail-student-email').textContent = student.email;
+        document.getElementById('detail-student-year').textContent = student.year + ' Year';
+        
+        const totalEvents = getTotalEvents();
+        const attended = student.attendanceCount || student.attendance.length;
+        const attendanceRate = totalEvents > 0 ? Math.round((attended / totalEvents) * 100) : (attended > 0 ? 100 : 0);
+        
+        document.getElementById('detail-total-events').textContent = totalEvents;
+        document.getElementById('detail-attended').textContent = attended;
+        document.getElementById('detail-attendance-rate').textContent = attendanceRate + '%';
+        
+        const historyBody = document.getElementById('attendance-history-body');
+        if (student.attendance.length === 0) {
+            historyBody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: #666;">
+                        No attendance records found for this student
+                    </td>
+                </tr>
+            `;
+        } else {
+            historyBody.innerHTML = student.attendance.map(record => `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${record.date}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${record.event}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${record.time}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+                        <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                            ${record.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        const modal = document.getElementById('student-details-modal');
+        if (modal) modal.style.display = 'block';
+        
+        window.currentViewingStudent = student;
+    }
+
+    // Close details modal
+    function closeDetailsModal() {
+        const modal = document.getElementById('student-details-modal');
+        if (modal) modal.style.display = 'none';
+        window.currentViewingStudent = null;
+    }
+
+    // Export student report
+    function exportStudentReport() {
+        if (!window.currentViewingStudent) return;
+        
+        const student = window.currentViewingStudent;
+        const data = [];
+        
+        data.push(['Student Attendance Report']);
+        data.push(['Generated:', new Date().toLocaleString()]);
+        data.push(['']);
+        data.push(['Student ID:', student.id]);
+        data.push(['Name:', student.name]);
+        data.push(['Email:', student.email]);
+        data.push(['Year Level:', student.year + ' Year']);
+        data.push(['Course:', student.course || 'N/A']);
+        data.push(['Status:', student.status]);
+        data.push(['']);
+        data.push(['Total Events:', getTotalEvents()]);
+        data.push(['Events Attended:', student.attendanceCount || student.attendance.length]);
+        const rate = getTotalEvents() > 0 ? Math.round(((student.attendanceCount || student.attendance.length) / getTotalEvents()) * 100) : 0;
+        data.push(['Attendance Rate:', rate + '%']);
+        data.push(['']);
+        data.push(['Attendance History']);
+        data.push(['Date', 'Event Name', 'Time Scanned', 'Status', 'Remarks']);
+        
+        student.attendance.forEach(record => {
+            data.push([
+                record.date, 
+                record.event, 
+                record.time, 
+                record.status,
+                record.remarks || ''
+            ]);
+        });
+        
+        exportToCSV(data, `${student.id}-${student.name.replace(/\s+/g, '-')}-Attendance-Report.csv`);
+        showToast('Report exported successfully', 'success');
+    }
+
+    // Search students
+    function searchStudents(query) {
+        const searchTerm = query.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            renderStudentsTable();
+            return;
+        }
+        
+        const filteredStudents = studentsData.filter(student => {
+            return student.id.toLowerCase().includes(searchTerm) ||
+                   student.name.toLowerCase().includes(searchTerm) ||
+                   student.email.toLowerCase().includes(searchTerm) ||
+                   student.year.toLowerCase().includes(searchTerm) ||
+                   (student.course && student.course.toLowerCase().includes(searchTerm));
+        });
+        
+        renderStudentsTable(filteredStudents);
+    }
+
+    // Sort students
+    function sortStudents(sortType) {
+        let sortedData = [...studentsData];
+        
+        switch(sortType) {
+            case 'id-asc':
+                sortedData.sort((a, b) => a.id.localeCompare(b.id));
+                break;
+            case 'id-desc':
+                sortedData.sort((a, b) => b.id.localeCompare(a.id));
+                break;
+            case 'name-asc':
+                sortedData.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sortedData.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            case 'attendance-high':
+                sortedData.sort((a, b) => (b.attendanceCount || 0) - (a.attendanceCount || 0));
+                break;
+            case 'attendance-low':
+                sortedData.sort((a, b) => (a.attendanceCount || 0) - (b.attendanceCount || 0));
+                break;
+        }
+        
+        renderStudentsTable(sortedData);
+        showToast('Students sorted', 'success');
+    }
+
+    // Initialize when students page is shown
+    setTimeout(() => {
+        initializeStudentManagement();
+    }, 500);
+    
+    const studentsNavButton = document.querySelector('[data-page="students"]');
+    if (studentsNavButton) {
+        studentsNavButton.addEventListener('click', function() {
+            setTimeout(() => {
+                if (studentsData.length === 0) {
+                    initializeStudentManagement();
+                }
+            }, 100);
+        });
+    }
