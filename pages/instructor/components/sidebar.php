@@ -16,12 +16,6 @@
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-button" data-page="student-analytics">
-                <span class="nav-icon">📈</span>
-                Analytics
-            </button>
-        </li>
-        <li class="nav-item">
             <button class="nav-button" data-page="class-management">
                 <span class="nav-icon">👥</span>
                 Class Management

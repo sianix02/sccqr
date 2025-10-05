@@ -1,4 +1,4 @@
-// Profile Modal Handler - Complete Version
+// Admin Profile Modal Handler
 (function() {
     let hasProfile = false;
     let isEditMode = false;
@@ -6,7 +6,7 @@
     // Check profile on page load
     function checkProfile() {
         $.ajax({
-            url: '../../sql_php/check_profile.php?ajax=1',
+            url: '../../sql_php/admin/check_admin_profile.php?ajax=1',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -29,23 +29,18 @@
     
     // Display profile information
     function displayProfile(data) {
-        const fullName = `${data.first_name} ${data.last_name}`;
+        const fullName = `${data.first_name} ${data.middle_initial ? data.middle_initial + ' ' : ''}${data.last_name}`;
         const initials = `${data.first_name.charAt(0)}${data.last_name.charAt(0)}`.toUpperCase();
         
         $('#avatar-initials').text(initials);
         $('#display-full-name').text(fullName);
-        $('#display-department').text(data.department);
-        $('#display-year-level').text(data.year_level_assigned);
-        $('#display-user-id').text(data.adviser_id);
-        
-        const position = data.position || 'Not Assigned';
-        $('#display-position').text(position);
+        $('#display-user-id').text(data.user_id);
+        $('#display-email').text(data.email || 'Not set');
         
         $('#first_name').val(data.first_name);
         $('#middle_initial').val(data.middle_initial || '');
         $('#last_name').val(data.last_name);
-        $('#department').val(data.department);
-        $('#year_level').val(data.year_level_assigned);
+        $('#email').val(data.email || '');
         
         $('#profile-view').show();
         $('#profile-form').hide();
@@ -72,13 +67,7 @@
     // Close modal
     function closeProfileModal() {
         if (!hasProfile) {
-            Notifications.alert({
-                title: 'Profile Required',
-                message: 'Please complete your profile to continue.',
-                icon: 'warning',
-                buttonText: 'OK',
-                buttonClass: 'primary'
-            });
+            alert('Please complete your profile to continue.');
             return;
         }
         $('#profile-modal-overlay').removeClass('active');
@@ -100,7 +89,7 @@
         $('#profile-error').hide();
         
         $.ajax({
-            url: '../../sql_php/save_profile.php',
+            url: '../../sql_php/admin/save_admin_profile.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -165,8 +154,13 @@
         }
     });
     
-    // Add profile button to sidebar
+    // Add profile button to sidebar (if not already exists)
     function addProfileButton() {
+        // Check if profile button already exists
+        if ($('#open-profile-modal').length > 0) {
+            return;
+        }
+        
         const profileButton = `
             <li class="nav-item">
                 <button class="nav-button" id="open-profile-modal">
@@ -176,7 +170,14 @@
             </li>
         `;
         
-        $('.nav-button[data-page="logout"]').parent().before(profileButton);
+        // Find logout button and add profile button before it
+        const $logoutButton = $('.nav-button[data-page="logout"]').parent();
+        if ($logoutButton.length > 0) {
+            $logoutButton.before(profileButton);
+        } else {
+            // If logout button not found, append to nav list
+            $('.sidebar nav ul').append(profileButton);
+        }
         
         $('#open-profile-modal').on('click', function() {
             showProfileModal(false);
@@ -190,7 +191,7 @@
     });
     
     // Expose functions globally
-    window.profileHandler = {
+    window.adminProfileHandler = {
         showModal: showProfileModal,
         closeModal: closeProfileModal,
         checkProfile: checkProfile

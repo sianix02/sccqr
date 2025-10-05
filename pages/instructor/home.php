@@ -18,6 +18,7 @@ $user_id = $_SESSION['session_id'];
     <title>Instructor Dashboard - Live Attendance</title>
     <script src="../../script/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="../../css/toast_notifications.css">
     <link rel="stylesheet" href="../../css/instructor.css">
 </head>
 <body>
@@ -37,7 +38,6 @@ $user_id = $_SESSION['session_id'];
 
     <main class="main-content">
         <?php include 'components/live_attendance.php'; ?>
-        <?php include 'components/analytics.php'; ?>
         <?php include 'components/class_management.php'; ?>
         <?php include 'components/logout_modal.php'; ?>
         <?php include 'components/profile_modal.php'; ?>
@@ -47,5 +47,6 @@ $user_id = $_SESSION['session_id'];
     <script src="../../script/instructor.js"></script>
     <script src="../../script/profile_handler.js"></script>
     <script src="../../script/password_handler.js"></script>
+    <script src="../../script/notifications.js"></script>
 </body>
 </html>

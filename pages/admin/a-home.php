@@ -60,9 +60,13 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         <?php include 'student.php'; ?>
         <?php include 'create-acc.php'; ?>
         <?php include 'logout.php'; ?>
+        <?php include 'admin_profile_modal.php'; ?>
+        <?php include 'admin_change_password_modal.php'; ?>
     </main>
 
     <script src="../../script/admin-home.js"></script>
+    <script src="../../script/admin_profile_handler.js"></script>
+    <script src="../../script/admin_password_handler.js"></script>
 
 </body>
 </html>

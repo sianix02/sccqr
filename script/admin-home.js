@@ -179,7 +179,6 @@ function renderCourseChart(chartData) {
     
     console.log('Chart Data Received:', chartData);
     
-    // Destroy existing chart if it exists
     if (courseChart) {
         courseChart.destroy();
         courseChart = null;
@@ -224,7 +223,6 @@ function renderCourseChart(chartData) {
     
     console.log('Final datasets for Chart.js:', datasets);
     
-    // Check if Chart.js is available
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded!');
         showChartError('Chart.js library not loaded');
@@ -310,8 +308,6 @@ function updateChartTimeRange() {
     
     showToast(`Updating chart for last ${months} months...`, 'success');
     
-    // In a real implementation, you would fetch new data based on the time range
-    // For now, we'll just reload the data
     loadAnalyticsData();
 }
 
@@ -626,6 +622,7 @@ let studentsData = [];
 let currentEditingStudent = null;
 let studentToDelete = null;
 let isLoadingStudents = false;
+let selectedStudents = new Set();
 
 function initializeStudentManagement() {
     setTimeout(() => {
@@ -647,7 +644,7 @@ async function loadStudentsFromDatabase() {
     
     tbody.innerHTML = `
         <tr>
-            <td colspan="7" style="padding: 40px; text-align: center; color: #666;">
+            <td colspan="8" style="padding: 40px; text-align: center; color: #666;">
                 <div class="loading-spinner" style="margin: 0 auto 10px;"></div>
                 <p>Loading students from database...</p>
             </td>
@@ -669,7 +666,7 @@ async function loadStudentsFromDatabase() {
     } catch (error) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="padding: 40px; text-align: center; color: #dc3545;">
+                <td colspan="8" style="padding: 40px; text-align: center; color: #dc3545;">
                     <p style="font-size: 18px; margin-bottom: 10px;">Error Loading Students</p>
                     <p style="margin-bottom: 15px;">${error.message}</p>
                     <button class="btn" onclick="loadStudentsFromDatabase()">Retry</button>
@@ -691,9 +688,8 @@ function renderStudentsTable(filteredData = null) {
     if (data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="padding: 40px; text-align: center; color: #666;">
+                <td colspan="8" style="padding: 40px; text-align: center; color: #666;">
                     <p style="font-size: 18px; margin-bottom: 10px;">No students found</p>
-                    <p>Click "Add New Student" to get started</p>
                 </td>
             </tr>
         `;
@@ -705,9 +701,14 @@ function renderStudentsTable(filteredData = null) {
         const totalEvents = getTotalEvents();
         const attendanceRate = totalEvents > 0 ? Math.round((attendanceCount / totalEvents) * 100) : (attendanceCount > 0 ? 100 : 0);
         const statusColor = student.status === 'Active' ? '#28a745' : '#dc3545';
+        const isChecked = selectedStudents.has(student.id);
         
         return `
             <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
+                    <input type="checkbox" class="student-checkbox" data-student-id="${student.id}" 
+                           ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
+                </td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.id}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.name}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.email}</td>
@@ -735,6 +736,56 @@ function renderStudentsTable(filteredData = null) {
             </tr>
         `;
     }).join('');
+    
+    attachCheckboxListeners();
+}
+
+function attachCheckboxListeners() {
+    const selectAllCheckbox = document.getElementById('select-all-students');
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+                const studentId = cb.getAttribute('data-student-id');
+                if (isChecked) {
+                    selectedStudents.add(studentId);
+                } else {
+                    selectedStudents.delete(studentId);
+                }
+            });
+            updateBulkDeleteButton();
+        });
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const studentId = this.getAttribute('data-student-id');
+            if (this.checked) {
+                selectedStudents.add(studentId);
+            } else {
+                selectedStudents.delete(studentId);
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            }
+            updateBulkDeleteButton();
+        });
+    });
+}
+
+function updateBulkDeleteButton() {
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (bulkDeleteBtn && selectedCount) {
+        if (selectedStudents.size > 0) {
+            bulkDeleteBtn.style.display = 'block';
+            selectedCount.textContent = selectedStudents.size;
+        } else {
+            bulkDeleteBtn.style.display = 'none';
+        }
+    }
 }
 
 function updateStudentStats() {
@@ -767,24 +818,27 @@ function getTotalEvents() {
 }
 
 function attachStudentEventListeners() {
-    const addBtn = document.getElementById('add-student-btn');
     const searchInput = document.getElementById('student-search');
     const sortSelect = document.getElementById('sort-students');
     const refreshBtn = document.getElementById('refresh-students');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     
-    addBtn?.addEventListener('click', () => openStudentModal());
     searchInput?.addEventListener('input', (e) => searchStudents(e.target.value));
     sortSelect?.addEventListener('change', (e) => sortStudents(e.target.value));
     refreshBtn?.addEventListener('click', () => {
+        selectedStudents.clear();
         loadStudentsFromDatabase();
         showToast('Refreshing student list...', 'success');
     });
+    
+    bulkDeleteBtn?.addEventListener('click', confirmBulkDelete);
     
     document.getElementById('close-modal')?.addEventListener('click', closeStudentModal);
     document.getElementById('cancel-modal')?.addEventListener('click', closeStudentModal);
     document.getElementById('close-details-modal')?.addEventListener('click', closeDetailsModal);
     document.getElementById('close-details-btn')?.addEventListener('click', closeDetailsModal);
     document.getElementById('cancel-delete')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('cancel-bulk-delete')?.addEventListener('click', closeBulkDeleteModal);
     
     document.getElementById('student-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -792,7 +846,81 @@ function attachStudentEventListeners() {
     });
     
     document.getElementById('confirm-delete')?.addEventListener('click', deleteStudent);
+    document.getElementById('confirm-bulk-delete')?.addEventListener('click', bulkDeleteStudents);
     document.getElementById('export-student-report')?.addEventListener('click', exportStudentReport);
+}
+
+function confirmBulkDelete() {
+    if (selectedStudents.size === 0) {
+        showToast('No students selected', 'error');
+        return;
+    }
+    
+    document.getElementById('bulk-delete-count').textContent = selectedStudents.size;
+    document.getElementById('bulk-delete-modal').style.display = 'block';
+}
+
+function closeBulkDeleteModal() {
+    document.getElementById('bulk-delete-modal').style.display = 'none';
+}
+
+async function bulkDeleteStudents() {
+    if (selectedStudents.size === 0) return;
+    
+    const confirmBtn = document.getElementById('confirm-bulk-delete');
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Deleting...';
+    
+    try {
+        let successCount = 0;
+        let failCount = 0;
+        const totalCount = selectedStudents.size;
+        
+        for (const studentId of selectedStudents) {
+            try {
+                const response = await fetch('../../api/delete_student.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    successCount++;
+                } else {
+                    failCount++;
+                    console.error(`Failed to delete student ${studentId}:`, result.error);
+                }
+            } catch (error) {
+                failCount++;
+                console.error(`Error deleting student ${studentId}:`, error);
+            }
+        }
+        
+        selectedStudents.clear();
+        closeBulkDeleteModal();
+        
+        if (successCount > 0) {
+            showToast(`Successfully deleted ${successCount} of ${totalCount} students`, 'success');
+        }
+        if (failCount > 0) {
+            showToast(`Failed to delete ${failCount} students`, 'error');
+        }
+        
+        await loadStudentsFromDatabase();
+        updateBulkDeleteButton();
+        
+        const selectAllCheckbox = document.getElementById('select-all-students');
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        
+    } catch (error) {
+        showToast('Error during bulk delete: ' + error.message, 'error');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+    }
 }
 
 function openStudentModal(student = null) {
@@ -803,12 +931,12 @@ function openStudentModal(student = null) {
     if (!modal) return;
     
     if (student) {
-        title.textContent = 'Update Student Information';
+        title.textContent = 'Edit Student Information';
         document.getElementById('student-id-hidden').value = student.id;
         document.getElementById('student-id-input').value = student.id;
         document.getElementById('student-id-input').disabled = true;
         document.getElementById('student-name').value = student.name;
-        document.getElementById('student-email').value = student.email;
+        document.getElementById('student-set').value = student.email;
         document.getElementById('student-year').value = student.year;
         document.getElementById('student-status').value = student.status;
     } else {
@@ -818,7 +946,7 @@ function openStudentModal(student = null) {
     }
     
     modal.style.display = 'block';
-    }
+}
 
 function closeStudentModal() {
     const modal = document.getElementById('student-modal');
@@ -830,7 +958,7 @@ function closeStudentModal() {
 async function saveStudent() {
     const id = document.getElementById('student-id-input').value.trim();
     const name = document.getElementById('student-name').value.trim();
-    const email = document.getElementById('student-email').value.trim();
+    const studentSet = document.getElementById('student-set').value.trim();
     const year = document.getElementById('student-year').value;
     const status = document.getElementById('student-status').value;
     
@@ -846,7 +974,7 @@ async function saveStudent() {
         last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : '',
         year_level: year,
         sex: 'Not Specified',
-        student_set: '',
+        student_set: studentSet,
         course: '',
         is_update: currentEditingStudent !== null
     };
@@ -950,7 +1078,7 @@ window.viewStudentDetails = function(studentId) {
     
     document.getElementById('detail-student-id').textContent = student.id;
     document.getElementById('detail-student-name').textContent = student.name;
-    document.getElementById('detail-student-email').textContent = student.email;
+    document.getElementById('detail-student-set').textContent = student.email;
     document.getElementById('detail-student-year').textContent = student.year + ' Year';
     
     const totalEvents = getTotalEvents();
@@ -1013,7 +1141,7 @@ function exportStudentReport() {
         [''],
         ['Student ID:', student.id],
         ['Name:', student.name],
-        ['Email:', student.email],
+        ['Set:', student.email],
         ['Year Level:', student.year + ' Year'],
         ['Course:', student.course || 'N/A'],
         ['Status:', student.status],

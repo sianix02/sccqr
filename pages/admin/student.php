@@ -10,11 +10,11 @@
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
             <!-- Search Bar -->
             <div style="flex: 1; min-width: 250px;">
-                <input type="text" id="student-search" placeholder="Search by ID, name, or email..." 
+                <input type="text" id="student-search" placeholder="Search by ID, name, or set..." 
                        style="width: 100%; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
             </div>
             
-            <!-- Sort and Add Controls -->
+            <!-- Sort and Bulk Delete Controls -->
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <select id="sort-students" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
                     <option value="id-asc">Sort by ID (Ascending)</option>
@@ -24,7 +24,9 @@
                     <option value="attendance-high">Sort by Attendance (High-Low)</option>
                     <option value="attendance-low">Sort by Attendance (Low-High)</option>
                 </select>
-                <button class="btn" id="add-student-btn">+ Add New Student</button>
+                <button class="btn btn-danger" id="bulk-delete-btn" style="display: none;">
+                    🗑️ Delete Selected (<span id="selected-count">0</span>)
+                </button>
             </div>
         </div>
     </div>
@@ -56,9 +58,12 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background-color: var(--light-blue-bg);">
+                        <th style="padding: 12px; text-align: center; color: var(--dark-blue); width: 50px;">
+                            <input type="checkbox" id="select-all-students" style="cursor: pointer; width: 18px; height: 18px;">
+                        </th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Student ID</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Name</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Email</th>
+                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Set</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Year Level</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Attendance</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Status</th>
@@ -67,7 +72,7 @@
                 </thead>
                 <tbody id="students-table-body">
                     <tr>
-                        <td colspan="7" style="padding: 40px; text-align: center; color: #666;">
+                        <td colspan="8" style="padding: 40px; text-align: center; color: #666;">
                             Loading students...
                         </td>
                     </tr>
@@ -81,7 +86,7 @@
 <div id="student-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
     <div style="background: white; max-width: 600px; margin: 50px auto; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="color: var(--dark-blue); margin: 0;" id="modal-title">Add New Student</h2>
+            <h2 style="color: var(--dark-blue); margin: 0;" id="modal-title">Edit Student</h2>
             <button id="close-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
         </div>
         
@@ -90,7 +95,7 @@
             
             <div class="form-group">
                 <label for="student-id-input">Student ID</label>
-                <input type="text" id="student-id-input" placeholder="e.g., 2024-001" required>
+                <input type="text" id="student-id-input" placeholder="e.g., 2024-001" required disabled>
             </div>
             
             <div class="form-group">
@@ -99,18 +104,18 @@
             </div>
             
             <div class="form-group">
-                <label for="student-email">Email Address</label>
-                <input type="email" id="student-email" placeholder="student@example.com" required>
+                <label for="student-set">Set</label>
+                <input type="text" id="student-set" placeholder="e.g., Set A" required>
             </div>
             
             <div class="form-group">
                 <label for="student-year">Year Level</label>
                 <select id="student-year" required>
                     <option value="">Select year level</option>
-                    <option value="First">First Year</option>
-                    <option value="Second">Second Year</option>
-                    <option value="Third">Third Year</option>
-                    <option value="Fourth">Fourth Year</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
                 </select>
             </div>
             
@@ -151,7 +156,7 @@
                 </div>
                 <div>
                     <p style="color: #666; font-size: 12px; margin: 0;">Set</p>
-                    <p style="color: var(--dark-blue); font-weight: 600; margin: 5px 0 0 0;" id="detail-student-email">-</p>
+                    <p style="color: var(--dark-blue); font-weight: 600; margin: 5px 0 0 0;" id="detail-student-set">-</p>
                 </div>
                 <div>
                     <p style="color: #666; font-size: 12px; margin: 0;">Year Level</p>
@@ -215,6 +220,22 @@
         <div style="display: flex; gap: 10px;">
             <button class="btn btn-danger" id="confirm-delete" style="flex: 1;">Delete</button>
             <button class="btn btn-secondary" id="cancel-delete" style="flex: 1;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div id="bulk-delete-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; max-width: 500px; margin: 150px auto; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center;">
+        <h3 style="color: var(--dark-blue); margin-bottom: 15px;">⚠️ Bulk Delete Students</h3>
+        <p style="color: #666; margin-bottom: 25px;">
+            Are you sure you want to delete <strong id="bulk-delete-count">0</strong> selected student(s)? 
+            <br>This action cannot be undone and will also delete all their attendance records.
+        </p>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-danger" id="confirm-bulk-delete" style="flex: 1;">Delete All Selected</button>
+            <button class="btn btn-secondary" id="cancel-bulk-delete" style="flex: 1;">Cancel</button>
         </div>
     </div>
 </div>
