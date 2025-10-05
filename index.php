@@ -10,51 +10,66 @@ if(isset($_POST['btn'])){
     // Convert id to int
     $id = (int) $textid;
 
-    // Get user from users table
-    $sql = "SELECT * FROM `users` WHERE username=$id AND password='$password'";
-    $login = $conn->query($sql);
+    // Use prepared statement to prevent SQL injection
+    $sql = "SELECT * FROM `users` WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if($row = $login->fetch_assoc()){
-        $user_id = $row['user_id'];
-        $role = $row['role'];
-        
-        // Store user_id in session
-        $_SESSION['session_id'] = $user_id;
-        $_SESSION['role'] = $role;
-        
-        switch ($role){
-            case 'admin':
-                header("location: pages/admin/a-home.php");
-                break;
-                
-            case 'student':
-                // IMPORTANT: Get student_id from student table and store in session
-                $student_sql = "SELECT student_id FROM `student` WHERE user_id = ?";
-                $student_stmt = $conn->prepare($student_sql);
-                $student_stmt->bind_param("i", $user_id);
-                $student_stmt->execute();
-                $student_result = $student_stmt->get_result();
-                
-                if($student_row = $student_result->fetch_assoc()){
-                    $_SESSION['student_id'] = $student_row['student_id'];
-                    $student_stmt->close();
-                    header("location: pages/student/home.php");
-                } else {
-                    $notice = "Student record not found. Please contact administrator.";
-                }
-                break;
+    if($row = $result->fetch_assoc()){
+        // Verify hashed password
+        if(password_verify($password, $row['password'])){
+            $user_id = $row['user_id'];
+            $role = $row['role'];
+            
+            // Store user_id in session
+            $_SESSION['session_id'] = $user_id;
+            $_SESSION['role'] = $role;
+            
+            switch ($role){
+                case 'admin':
+                    header("location: pages/admin/a-home.php");
+                    exit();
+                    break;
+                    
+                case 'student':
+                    // Get student_id from student table and store in session
+                    $student_sql = "SELECT student_id FROM `student` WHERE user_id = ?";
+                    $student_stmt = $conn->prepare($student_sql);
+                    $student_stmt->bind_param("i", $user_id);
+                    $student_stmt->execute();
+                    $student_result = $student_stmt->get_result();
+                    
+                    if($student_row = $student_result->fetch_assoc()){
+                        $_SESSION['student_id'] = $student_row['student_id'];
+                        $student_stmt->close();
+                        header("location: pages/student/home.php");
+                        exit();
+                    } else {
+                        // Redirect to registration page with user_id
+                        $student_stmt->close();
+                        header("location: pages/student/student-registration.php?user_id=" . $user_id);
+                        exit();
+                    }
+                    break;
 
-            case 'instructor':
-                header("location: pages/instructor/home.php");
-                break;
-                
-            default:
-                $message = "error!";
+                case 'instructor':
+                    header("location: pages/instructor/home.php");
+                    exit();
+                    break;
+                    
+                default:
+                    $notice = "Invalid role assigned";
             }
-
+        } else {
+            $notice = "Invalid ID or Password";
+        }
     } else {
         $notice = "Invalid ID or Password";
     }
+    
+    $stmt->close();
 }
 ?>
 
@@ -88,7 +103,13 @@ if(isset($_POST['btn'])){
                 <input type="password" id="password" name="password" required placeholder="Enter your password">
             </div>
             <button type="submit" class="login-button" name="btn">Login</button>
-            <p id='notif'><?php if(isset($notice)) echo "$notice"?></p>
+            <?php if(isset($notice)): ?>
+                <p id='notif' style="color: #dc3545; margin-top: 10px; text-align: center;"><?php echo htmlspecialchars($notice); ?></p>
+            <?php endif; ?>
+            
+            <div class="forgot-password-link">
+                <a href="forgot-password.php">Forgot Password?</a>
+            </div>
         </form>
 
         <div class="login-footer">

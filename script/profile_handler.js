@@ -1,4 +1,4 @@
-// Profile Modal Handler
+// Profile Modal Handler - Complete Version
 (function() {
     let hasProfile = false;
     let isEditMode = false;
@@ -13,12 +13,10 @@
                 hasProfile = response.has_profile;
                 
                 if (hasProfile && response.profile_data) {
-                    // User has profile - show view mode by default
                     displayProfile(response.profile_data);
                     $('#close-profile-modal').show();
                     $('#cancel-profile-btn').show();
                 } else {
-                    // User doesn't have profile - force them to create one
                     showProfileModal(true);
                 }
             },
@@ -40,13 +38,15 @@
         $('#display-year-level').text(data.year_level_assigned);
         $('#display-user-id').text(data.adviser_id);
         
-        // Populate form fields for editing
+        const position = data.position || 'Not Assigned';
+        $('#display-position').text(position);
+        
         $('#first_name').val(data.first_name);
+        $('#middle_initial').val(data.middle_initial || '');
         $('#last_name').val(data.last_name);
         $('#department').val(data.department);
         $('#year_level').val(data.year_level_assigned);
         
-        // Show profile view, hide form
         $('#profile-view').show();
         $('#profile-form').hide();
         $('#profile-modal-title').text('Your Profile');
@@ -58,7 +58,6 @@
         $('#profile-modal-overlay').addClass('active');
         
         if (mandatory) {
-            // Mandatory profile creation
             $('#close-profile-modal').hide();
             $('#cancel-profile-btn').hide();
             $('#profile-modal-title').text('Complete Your Profile');
@@ -66,7 +65,6 @@
             $('#profile-view').hide();
             $('#profile-form').show();
         } else {
-            // Optional profile view/edit
             $('#close-profile-modal').show();
         }
     }
@@ -74,7 +72,6 @@
     // Close modal
     function closeProfileModal() {
         if (!hasProfile) {
-            // Don't allow closing if profile is not complete
             alert('Please complete your profile to continue.');
             return;
         }
@@ -91,7 +88,6 @@
         const $saveBtnText = $('#save-btn-text');
         const $saveBtnLoader = $('#save-btn-loader');
         
-        // Disable button and show loader
         $saveBtn.prop('disabled', true);
         $saveBtnText.hide();
         $saveBtnLoader.show();
@@ -104,13 +100,9 @@
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // Show success message
                     alert(response.message);
-                    
-                    // Reload profile data
                     checkProfile();
                     
-                    // Close modal if it was a new profile
                     if (!hasProfile) {
                         hasProfile = true;
                         closeProfileModal();
@@ -118,7 +110,6 @@
                     
                     isEditMode = false;
                 } else {
-                    // Show error
                     $('#error-message').text(response.message);
                     $('#profile-error').show();
                 }
@@ -128,7 +119,6 @@
                 $('#profile-error').show();
             },
             complete: function() {
-                // Re-enable button and hide loader
                 $saveBtn.prop('disabled', false);
                 $saveBtnText.show();
                 $saveBtnLoader.hide();
@@ -149,7 +139,6 @@
     // Cancel edit
     $('#cancel-profile-btn').on('click', function() {
         if (isEditMode && hasProfile) {
-            // Return to view mode
             $('#profile-form').hide();
             $('#profile-view').show();
             $('#profile-modal-title').text('Your Profile');
@@ -170,7 +159,7 @@
         }
     });
     
-    // Add profile button to sidebar (optional)
+    // Add profile button to sidebar
     function addProfileButton() {
         const profileButton = `
             <li class="nav-item">
@@ -181,7 +170,6 @@
             </li>
         `;
         
-        // Insert before logout button
         $('.nav-button[data-page="logout"]').parent().before(profileButton);
         
         $('#open-profile-modal').on('click', function() {
@@ -195,7 +183,7 @@
         addProfileButton();
     });
     
-    // Expose functions globally if needed
+    // Expose functions globally
     window.profileHandler = {
         showModal: showProfileModal,
         closeModal: closeProfileModal,

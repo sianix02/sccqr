@@ -22,7 +22,7 @@
                 <select id="role" name='role'>
                     <option value="">Select role</option>
                     <option value="admin">Administrator</option>
-                    <option value="teacher">Teacher</option>
+                    <option value="teacher">Instructorr</option>
                     <option value="student">Student</option>
                 </select>
             </div>

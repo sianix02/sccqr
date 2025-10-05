@@ -143,7 +143,6 @@ body {
 
 .page {
     display: none;
-    animation: fadeIn 0.3s ease-out;
 }
 
 .page.active {
@@ -222,7 +221,6 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: transform 0.2s ease;
 }
 
 .stat-label {
@@ -233,50 +231,14 @@ body {
     letter-spacing: 0.5px;
 }
 
-
-
-.live-dot {
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
-    animation: blink 1s infinite;
-}
-
 /* Time Frame Controls */
 .time-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 25px;
     flex-wrap: wrap;
     gap: 15px;
-}
-
-.time-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.time-btn {
-    padding: 10px 20px;
-    border: 2px solid var(--primary-blue);
-    background: transparent;
-    color: var(--primary-blue);
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.time-btn.active,
-.time-btn:hover {
-    background: var(--primary-blue);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
 }
 
 /* Filter Controls */
@@ -385,21 +347,14 @@ body {
 .student-table td {
     padding: 16px;
     border-bottom: 1px solid #f0f8ff;
-    transition: all 0.3s ease;
 }
 
 .student-row {
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
 .student-row:hover {
     background: #f8fcff;
-    transform: translateX(4px);
-}
-
-.student-row.new-entry {
-    background: linear-gradient(90deg, #e8f5e8, transparent);
-    animation: slideIn 0.5s ease-out;
 }
 
 /* Status Badges */
@@ -493,52 +448,7 @@ body {
     display: block;
 }
 
-/* Connection Status */
-.connection-status {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.connection-online {
-    background: var(--success-green);
-    color: white;
-}
-
-.connection-offline {
-    background: var(--danger-red);
-    color: white;
-}
-
 /* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0.3; }
-}
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -573,10 +483,6 @@ body {
         align-items: stretch;
     }
     
-    .time-selector {
-        justify-content: center;
-    }
-    
     .filter-controls {
         flex-direction: column;
         align-items: stretch;
@@ -594,11 +500,23 @@ body {
     .student-table td {
         padding: 12px 8px;
     }
-    
-    .live-indicator {
-        position: relative;
-        top: auto;
-        right: auto;
-        margin-top: 15px;
-    }
+}
+
+/* Smooth scrollbar */
+.student-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.student-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 10px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-blue);
 }

@@ -1,19 +1,42 @@
 <?php
-//ayaw e delete
-// Allow cross-origin requests (for testing)
+session_start();
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// Include database connection
 require_once '../sql_php/connection.php';
 
 try {
-    // Get optional filters from query parameters
-    $timeframe = isset($_GET['timeframe']) ? $_GET['timeframe'] : 'today';
+    // Check if user is logged in
+    if (!isset($_SESSION['session_id'])) {
+        throw new Exception('Unauthorized access');
+    }
+    
+    $user_id = $_SESSION['session_id'];
+    
+    // Get instructor information including position
+    $instructor_query = "SELECT i.adviser_id, i.position, i.year_level_assigned, i.department 
+                        FROM instructor i 
+                        INNER JOIN users u ON i.adviser_id = u.user_id 
+                        WHERE u.user_id = ?";
+    $stmt = $conn->prepare($instructor_query);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $instructor_result = $stmt->get_result();
+    
+    if ($instructor_result->num_rows === 0) {
+        throw new Exception('Instructor not found');
+    }
+    
+    $instructor = $instructor_result->fetch_assoc();
+    $position = strtolower(trim($instructor['position']));
+    $year_level = $instructor['year_level_assigned'];
+    $department = $instructor['department'];
+    
+    // Get filters
     $status = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search = isset($_GET['search']) ? $_GET['search'] : '';
     
-    // Build the base query with your exact table structure
+    // Build query based on position
     $query = "SELECT 
                 ar.attendance_id,
                 ar.student_id,
@@ -29,23 +52,24 @@ try {
                 CONCAT(s.first_name, ' ', s.last_name) as full_name
               FROM attendance_report ar
               INNER JOIN student s ON ar.student_id = s.student_id
-              WHERE 1=1";
+              WHERE ar.date = CURDATE()";
     
-    // Apply timeframe filter
-    if ($timeframe === 'today') {
-        $query .= " AND ar.date = CURDATE()";
-    } elseif ($timeframe === 'this-week') {
-        $query .= " AND YEARWEEK(ar.date, 1) = YEARWEEK(CURDATE(), 1)";
-    } elseif ($timeframe === 'this-month') {
-        $query .= " AND MONTH(ar.date) = MONTH(CURDATE()) AND YEAR(ar.date) = YEAR(CURDATE())";
+    // Apply role-based filtering
+    if (strpos($position, 'dean') !== false) {
+        // Dean sees all students in their department
+        $query .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
+    } else {
+        // Class adviser sees only their assigned year level and department
+        $query .= " AND s.year_level = '" . $conn->real_escape_string($year_level) . "'";
+        $query .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
     }
     
-    // Apply status filter if not 'all'
+    // Apply status filter
     if ($status !== 'all' && !empty($status)) {
         $query .= " AND ar.remarks = '" . $conn->real_escape_string($status) . "'";
     }
     
-    // Apply search filter if provided
+    // Apply search filter
     if (!empty($search)) {
         $searchEscaped = $conn->real_escape_string($search);
         $query .= " AND (ar.student_id LIKE '%{$searchEscaped}%' 
@@ -54,10 +78,8 @@ try {
                     OR s.course LIKE '%{$searchEscaped}%')";
     }
     
-    // Order by most recent first
-    $query .= " ORDER BY ar.date DESC, ar.time_in DESC LIMIT 100";
+    $query .= " ORDER BY ar.time_in DESC LIMIT 100";
     
-    // Execute query
     $result = $conn->query($query);
     
     if (!$result) {
@@ -82,7 +104,7 @@ try {
         ];
     }
     
-    // Get statistics for today only
+    // Get statistics with same filtering
     $statsQuery = "SELECT 
                     COUNT(DISTINCT ar.student_id) as total_students,
                     COUNT(*) as total_checkins,
@@ -90,7 +112,15 @@ try {
                     SUM(CASE WHEN ar.remarks = 'late' THEN 1 ELSE 0 END) as late_count,
                     MAX(ar.time_in) as last_checkin
                    FROM attendance_report ar
+                   INNER JOIN student s ON ar.student_id = s.student_id
                    WHERE ar.date = CURDATE()";
+    
+    if (strpos($position, 'dean') !== false) {
+        $statsQuery .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
+    } else {
+        $statsQuery .= " AND s.year_level = '" . $conn->real_escape_string($year_level) . "'";
+        $statsQuery .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
+    }
     
     $statsResult = $conn->query($statsQuery);
     
@@ -100,12 +130,10 @@ try {
     
     $stats = $statsResult->fetch_assoc();
     
-    // Calculate attendance rate
     $totalStudents = (int)$stats['total_students'];
     $presentCount = (int)$stats['present_count'];
     $attendanceRate = $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100) : 0;
     
-    // Format response
     $response = [
         'success' => true,
         'data' => $attendanceData,
@@ -115,6 +143,11 @@ try {
             'lateCount' => (int)$stats['late_count'],
             'attendanceRate' => $attendanceRate,
             'lastCheckin' => $stats['last_checkin'] ? date('g:i A', strtotime($stats['last_checkin'])) : '--:--'
+        ],
+        'instructor' => [
+            'position' => $instructor['position'],
+            'department' => $department,
+            'yearLevel' => $year_level
         ],
         'timestamp' => date('Y-m-d H:i:s'),
         'count' => count($attendanceData)
@@ -132,7 +165,6 @@ try {
     ]);
 }
 
-// Close connection
 if (isset($conn)) {
     $conn->close();
 }

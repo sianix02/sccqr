@@ -28,12 +28,6 @@
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-button" data-page="reports">
-                <span class="nav-icon">📋</span>
-                Reports
-            </button>
-        </li>
-        <li class="nav-item">
             <button class="nav-button" data-page="logout">
                 <span class="nav-icon">🚪</span>
                 Log Out

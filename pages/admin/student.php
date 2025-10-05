@@ -150,7 +150,7 @@
                     <p style="color: var(--dark-blue); font-weight: 600; margin: 5px 0 0 0;" id="detail-student-name">-</p>
                 </div>
                 <div>
-                    <p style="color: #666; font-size: 12px; margin: 0;">Email</p>
+                    <p style="color: #666; font-size: 12px; margin: 0;">Set</p>
                     <p style="color: var(--dark-blue); font-weight: 600; margin: 5px 0 0 0;" id="detail-student-email">-</p>
                 </div>
                 <div>

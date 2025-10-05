@@ -1,0 +1,235 @@
+/* Analytics Chart Specific Styles */
+
+.analytics-chart-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fcff 100%);
+    border: 1px solid #e3f2fd;
+    box-shadow: 0 6px 24px rgba(0, 102, 204, 0.08);
+    margin-bottom: 25px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.chart-title {
+    color: var(--dark-blue);
+    margin-bottom: 5px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.chart-subtitle {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-select {
+    background-color: var(--white);
+    color: var(--dark-blue);
+    padding: 10px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+.chart-select:hover {
+    border-color: var(--primary-blue);
+}
+
+.chart-select:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.btn-refresh {
+    background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.btn-refresh:hover {
+    transform: rotate(180deg);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.btn-refresh:active {
+    transform: rotate(180deg) scale(0.95);
+}
+
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    height: 400px;
+    width: 100%;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-legend-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #666;
+    display: none;
+}
+
+.chart-legend-info.active {
+    display: block;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 20px;
+    margin-bottom: 8px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    margin-right: 8px;
+}
+
+.legend-label {
+    font-weight: 500;
+    color: #333;
+}
+
+/* Loading state for chart */
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.chart-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e3f2fd;
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.chart-loading-text {
+    color: #666;
+    font-size: 14px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+}
+
+.chart-empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+.chart-empty-text {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.chart-empty-subtext {
+    font-size: 13px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .chart-select {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .chart-container {
+        height: 320px;
+        padding: 15px;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        height: 280px;
+        padding: 10px;
+    }
+    
+    .chart-title {
+        font-size: 16px;
+    }
+    
+    .chart-subtitle {
+        font-size: 13px;
+    }
+    
+    .btn-refresh {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .legend-item {
+        display: block;
+        margin-right: 0;
+    }
+}

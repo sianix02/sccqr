@@ -39,14 +39,13 @@ $user_id = $_SESSION['session_id'];
         <?php include 'components/live_attendance.php'; ?>
         <?php include 'components/analytics.php'; ?>
         <?php include 'components/class_management.php'; ?>
-        <?php include 'components/reports.php'; ?>
         <?php include 'components/logout_modal.php'; ?>
-        
-        <!-- Profile Modal -->
         <?php include 'components/profile_modal.php'; ?>
+        <?php include 'components/change_password_modal.php'; ?>
     </main>
 
     <script src="../../script/instructor.js"></script>
     <script src="../../script/profile_handler.js"></script>
+    <script src="../../script/password_handler.js"></script>
 </body>
 </html>

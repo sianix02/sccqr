@@ -1,8 +1,7 @@
 <div class="page active" id="live-attendance">
     <div class="page-header">
         <h1 class="page-title">Live Attendance Monitor</h1>
-        <p class="page-subtitle">Real-time student attendance tracking</p>
-
+        <p class="page-subtitle">Real-time student attendance tracking - Today</p>
     </div>
 
     <!-- Live Statistics -->
@@ -25,15 +24,9 @@
         </div>
     </div>
 
-    <!-- Time Frame Controls -->
+    <!-- Filter Controls (Removed Time Frame Controls) -->
     <div class="content-card">
         <div class="time-controls">
-            <div class="time-selector">
-                <button class="time-btn active" data-timeframe="today">Today</button>
-                <button class="time-btn" data-timeframe="this-week">This Week</button>
-                <button class="time-btn" data-timeframe="this-month">This Month</button>
-            </div>
-            
             <div class="filter-controls">
                 <input type="text" class="search-box" placeholder="Search students..." id="student-search">
                 <select class="filter-dropdown" id="status-filter">
@@ -46,7 +39,7 @@
                     <span>🔄</span> Refresh
                 </button>
                 <button class="export-btn" id="export-attendance">
-                    <span>📊</span> Export Data
+                    <span>📊</span> Export to Excel
                 </button>
             </div>
         </div>
@@ -68,12 +61,14 @@
                         <th>Course/Year</th>
                         <th>Status</th>
                         <th>Event</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="student-attendance-list">
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <div class="empty-state-icon">👥</div>
                             <h3>No attendance data available</h3>
                             <p>Attendance records will appear here when students check in</p>

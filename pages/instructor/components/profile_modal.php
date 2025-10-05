@@ -1,96 +1,117 @@
-<!-- Profile Modal -->
+<!-- Profile Modal - Complete Version -->
 <div class="modal-overlay" id="profile-modal-overlay">
-    <div class="modal-content profile-modal">
-        <div class="modal-header">
-            <h2 class="modal-title" id="profile-modal-title">Complete Your Profile</h2>
-            <button class="modal-close" id="close-profile-modal" style="display: none;">&times;</button>
-        </div>
+    <div class="modal-container">
+        <button class="modal-close" id="close-profile-modal" style="display: none;">&times;</button>
         
-        <div class="modal-body">
-            <div class="profile-info" id="profile-view" style="display: none;">
-                <div class="profile-avatar">
-                    <div class="avatar-circle">
-                        <span id="avatar-initials">IN</span>
-                    </div>
+        <div class="modal-header">
+            <h2 id="profile-modal-title">Your Profile</h2>
+        </div>
+
+        <!-- Alert for mandatory profile -->
+        <div class="profile-alert" id="profile-alert" style="display: none;">
+            <strong>⚠️ Action Required:</strong> Please complete your profile information to continue using the system.
+        </div>
+
+        <!-- Error Message -->
+        <div class="profile-error" id="profile-error" style="display: none;">
+            <strong>Error:</strong> <span id="error-message"></span>
+        </div>
+
+        <!-- Profile View Mode -->
+        <div id="profile-view" style="display: none;">
+            <div class="profile-avatar">
+                <div class="avatar-circle">
+                    <span id="avatar-initials">AB</span>
                 </div>
-                
-                <div class="profile-details">
-                    <div class="profile-field">
-                        <label>Full Name:</label>
-                        <p id="display-full-name">-</p>
-                    </div>
-                    <div class="profile-field">
-                        <label>Department:</label>
-                        <p id="display-department">-</p>
-                    </div>
-                    <div class="profile-field">
-                        <label>Year Level Assigned:</label>
-                        <p id="display-year-level">-</p>
-                    </div>
-                    <div class="profile-field">
-                        <label>Instructor ID:</label>
-                        <p id="display-user-id">-</p>
-                    </div>
-                </div>
-                
-                <button class="btn btn-secondary" id="edit-profile-btn">Edit Profile</button>
             </div>
-            
-            <form id="profile-form" class="profile-form">
-                <div class="alert alert-info" id="profile-alert">
-                    <strong>📋 Profile Setup Required</strong>
-                    <p>Please complete your profile information to continue using the system.</p>
+
+            <div class="profile-info-grid">
+                <div class="profile-info-item">
+                    <label>Full Name</label>
+                    <div class="info-value" id="display-full-name">-</div>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="first_name">First Name <span class="required">*</span></label>
-                        <input type="text" id="first_name" name="first_name" required placeholder="Enter your first name">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="last_name">Last Name <span class="required">*</span></label>
-                        <input type="text" id="last_name" name="last_name" required placeholder="Enter your last name">
-                    </div>
+
+                <div class="profile-info-item">
+                    <label>User ID</label>
+                    <div class="info-value" id="display-user-id">-</div>
                 </div>
-                
+
+                <div class="profile-info-item">
+                    <label>Position</label>
+                    <div class="info-value" id="display-position">-</div>
+                </div>
+
+                <div class="profile-info-item">
+                    <label>Department</label>
+                    <div class="info-value" id="display-department">-</div>
+                </div>
+
+                <div class="profile-info-item">
+                    <label>Year Level Assigned</label>
+                    <div class="info-value" id="display-year-level">-</div>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button type="button" class="btn-secondary" id="cancel-profile-btn">Close</button>
+                <button type="button" class="btn-primary" id="edit-profile-btn">Edit Profile</button>
+            </div>
+        </div>
+
+        <!-- Profile Edit Form -->
+        <form id="profile-form" style="display: none;">
+            <div class="form-grid">
                 <div class="form-group">
-                    <label for="department">Department <span class="required">*</span></label>
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="middle_initial">Middle Initial</label>
+                    <input type="text" id="middle_initial" name="middle_initial" maxlength="5" placeholder="e.g., A." style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department *</label>
                     <select id="department" name="department" required>
                         <option value="">Select Department</option>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Information Technology">Information Technology</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Business Administration">Business Administration</option>
-                        <option value="Education">Education</option>
-                        <option value="Arts and Sciences">Arts and Sciences</option>
+                        <option value="BS Information Technology">BS Information Technology</option>
+                        <option value="BS Business Administration">BS Business Administration</option>
+                        <option value="BS Criminology">BS Criminology</option>
+                        <option value="BS Secondary Education">BS Secondary Education</option>
+                        <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="year_level">Year Level Assigned <span class="required">*</span></label>
+                    <label for="year_level">Year Level Assigned *</label>
                     <select id="year_level" name="year_level" required>
                         <option value="">Select Year Level</option>
-                        <option value="First">First Year</option>
-                        <option value="Second">Second Year</option>
-                        <option value="Third">Third Year</option>
-                        <option value="Fourth">Fourth Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
                     </select>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="save-profile-btn">
-                        <span id="save-btn-text">Save Profile</span>
-                        <span id="save-btn-loader" style="display: none;">Saving...</span>
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="cancel-profile-btn" style="display: none;">Cancel</button>
-                </div>
-                
-                <div class="alert alert-danger" id="profile-error" style="display: none;">
-                    <strong>Error:</strong> <span id="error-message"></span>
-                </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="form-note">
+                <strong>Note:</strong> Position is assigned by the administrator and cannot be edited.
+            </div>
+
+            <div class="profile-actions">
+                <button type="button" class="btn-secondary" id="cancel-profile-btn">Cancel</button>
+                <button type="submit" class="btn-primary" id="save-profile-btn">
+                    <span id="save-btn-text">Save Profile</span>
+                    <span id="save-btn-loader" style="display: none;">Saving...</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -102,162 +123,186 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 9999;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
     justify-content: center;
     align-items: center;
-    animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 .modal-overlay.active {
     display: flex;
 }
 
-.modal-content {
+.modal-container {
     background: white;
-    border-radius: 20px;
-    width: 90%;
+    border-radius: 16px;
+    padding: 30px;
     max-width: 600px;
+    width: 90%;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s ease;
-}
-
-.profile-modal {
-    max-width: 700px;
-}
-
-.modal-header {
-    padding: 30px;
-    border-bottom: 2px solid #f0f8ff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, #0066cc 0%, #004080 100%);
-    color: white;
-    border-radius: 20px 20px 0 0;
-}
-
-.modal-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
+    position: relative;
 }
 
 .modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
     background: none;
     border: none;
     font-size: 32px;
-    color: white;
+    color: #666;
     cursor: pointer;
+    line-height: 1;
     padding: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background 0.3s;
+    width: 32px;
+    height: 32px;
 }
 
 .modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    color: #dc3545;
 }
 
-.modal-body {
-    padding: 30px;
+.modal-header {
+    margin-bottom: 25px;
+    text-align: center;
 }
 
-.profile-form {
+.modal-header h2 {
+    color: #0066cc;
+    font-size: 28px;
+    margin: 0;
+}
+
+.profile-alert {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.profile-error {
+    background: #f8d7da;
+    border: 1px solid #dc3545;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.profile-avatar {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
+    justify-content: center;
+    margin-bottom: 30px;
 }
 
-.form-row {
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0066cc, #004080);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.profile-info-item {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #0066cc;
+}
+
+.profile-info-item label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.profile-info-item .info-value {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    margin-bottom: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
 .form-group label {
-    font-weight: 600;
-    color: #004080;
     font-size: 14px;
-}
-
-.required {
-    color: #dc3545;
+    color: #333;
+    margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .form-group input,
 .form-group select {
-    padding: 12px 16px;
+    padding: 12px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 14px;
-    transition: all 0.3s;
+    transition: border-color 0.3s;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: #0066cc;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
-.alert {
-    padding: 15px 20px;
-    border-radius: 10px;
+.form-note {
+    background: #e3f2fd;
+    border: 1px solid #0066cc;
+    color: #004080;
+    padding: 12px;
+    border-radius: 8px;
     margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.alert-info {
-    background: #d1ecf1;
-    border-left: 4px solid #0c5460;
-    color: #0c5460;
-}
-
-.alert-danger {
-    background: #f8d7da;
-    border-left: 4px solid #721c24;
-    color: #721c24;
-}
-
-.alert strong {
-    font-size: 16px;
-}
-
-.alert p {
-    margin: 0;
     font-size: 14px;
 }
 
-.form-actions {
+.profile-actions {
     display: flex;
     gap: 15px;
-    margin-top: 10px;
+    justify-content: flex-end;
 }
 
-.btn {
-    padding: 14px 28px;
+.btn-primary,
+.btn-secondary {
+    padding: 12px 24px;
     border: none;
-    border-radius: 10px;
-    font-size: 15px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-    flex: 1;
 }
 
 .btn-primary {
@@ -267,105 +312,35 @@
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-secondary {
-    background: #6c757d;
-    color: white;
+    background: #e0e0e0;
+    color: #333;
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
-}
-
-.profile-info {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.profile-avatar {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-.avatar-circle {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0066cc, #004080);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 36px;
-    font-weight: 700;
-    box-shadow: 0 8px 25px rgba(0, 102, 204, 0.3);
-}
-
-.profile-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.profile-field {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
-    border-left: 4px solid #0066cc;
-}
-
-.profile-field label {
-    font-size: 12px;
-    color: #666;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    display: block;
-}
-
-.profile-field p {
-    font-size: 16px;
-    color: #004080;
-    font-weight: 600;
-    margin: 0;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { 
-        opacity: 0; 
-        transform: translateY(50px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    background: #d0d0d0;
 }
 
 @media (max-width: 768px) {
-    .form-row {
+    .form-grid {
         grid-template-columns: 1fr;
     }
     
-    .profile-details {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 20px;
-    }
-    
-    .form-actions {
+    .profile-actions {
         flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
     }
 }
 </style>

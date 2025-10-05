@@ -56,5 +56,5 @@ if(isset($_POST['btn'])){
     echo "Form not submitted properly!";
 }
 
-header('location: ../pages/student/home.php');
+header('location: ../pages/admin/a-home.php');
 ?>

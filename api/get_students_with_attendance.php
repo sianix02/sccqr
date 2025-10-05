@@ -13,7 +13,7 @@ try {
     $sql = "SELECT 
                 user_id,
                 student_id,
-                CONCAT(IFNULL(first_name, ''), ' ', IFNULL(last_name, '')) as full_name,
+                CONCAT(IFNULL(first_name, ''), ' ', IFNULL(middle_initial, ''), ' ', IFNULL(last_name, ''))as full_name,
                 first_name,
                 last_name,
                 IFNULL(year_level, 'N/A') as year_level,
@@ -50,17 +50,26 @@ try {
         $attendanceResult = $attendanceStmt->get_result();
         
         $attendance = [];
+        $presentCount = 0; // Counter for actual present attendance
+        
         while ($attRow = $attendanceResult->fetch_assoc()) {
+            // Use remarks field to determine actual status
+            // Auto capitalize first letter
+            $status = ucfirst(strtolower($attRow['remarks'] ?? 'Absent'));
+            
+            // Count only if remarks is 'Present'
+            if ($status === 'Present') {
+                $presentCount++;
+            }
+            
             $attendance[] = [
                 'event' => $attRow['event_name'],
                 'date' => $attRow['date'],
                 'time' => $attRow['time_in'] ? date('h:i A', strtotime($attRow['time_in'])) : 'N/A',
-                'status' => !empty($attRow['time_in']) ? 'Present' : 'Absent',
+                'status' => $status,
                 'remarks' => $attRow['remarks']
             ];
         }
-        
-        $attendanceCount = count($attendance);
         
         $students[] = [
             'id' => (string)$studentId,
@@ -71,7 +80,7 @@ try {
             'sex' => $row['sex'],
             'status' => 'Active',
             'attendance' => $attendance,
-            'attendanceCount' => $attendanceCount
+            'attendanceCount' => $presentCount // Now counts only Present records
         ];
     }
     
