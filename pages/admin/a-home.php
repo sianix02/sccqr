@@ -46,6 +46,8 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="../../script/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="../../css/admin_home.css">
     <link rel="stylesheet" href="../../css/analytics_chart.css">
 </head>

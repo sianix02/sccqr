@@ -1,13 +1,16 @@
 // ============================================================
-// CONSOLIDATED ADMIN DASHBOARD SCRIPT
-// File: admin-home.js (replaces both admin-home.js and student.js)
+// COMPLETE ADMIN-HOME.JS FILE - WITH PDF EXPORT (Legal Size)
+// Replace the entire admin-home.js file with this code
 // ============================================================
+
+// Add these libraries to your HTML file:
+// <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+// <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 // ============================================================
 // GLOBAL UTILITIES
 // ============================================================
 
-// Toast notification system
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
@@ -23,24 +26,93 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// Export data to CSV
-function exportToCSV(data, filename) {
-    const csvContent = data.map(row => 
-        row.map(cell => `"${cell}"`).join(',')
-    ).join('\n');
+// PDF Header Helper Function
+function addPDFHeader(doc) {
+    doc.setFillColor(0, 102, 204);
+    doc.rect(0, 0, 8.5, 1.8, 'F');
+
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.02);
+    doc.circle(1.0, 0.9, 0.35, 'S');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('LOGO', 1.0, 0.92, { align: 'center' });
+
+    doc.circle(7.5, 0.9, 0.35, 'S');
+    doc.text('LOGO', 7.5, 0.92, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text('Republic of the Philippines', 4.25, 0.4, { align: 'center' });
+    doc.text('Province of Cebu', 4.25, 0.55, { align: 'center' });
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('SIBONGA COMMUNITY COLLEGE', 4.25, 0.8, { align: 'center' });
     
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text('Poblacion, Sibonga, Cebu', 4.25, 0.98, { align: 'center' });
+    doc.text('Tel. No.: (032) 485-9405', 4.25, 1.13, { align: 'center' });
+    doc.text('Email: sibongacommunitycollege@gmail.com', 4.25, 1.28, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('QR CODE ATTENDANCE MONITORING SYSTEM', 4.25, 1.55, { align: 'center' });
+}
+
+// Export to PDF (replaces exportToCSV)
+function exportToPDF(data, filename, title = 'Report') {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: [8.5, 13]
+    });
+
+    addPDFHeader(doc);
+
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(title, 4.25, 2.3, { align: 'center' });
+
+    if (data.length > 0) {
+        const headers = [data[0]];
+        const body = data.slice(1);
+
+        doc.autoTable({
+            startY: 2.6,
+            head: headers,
+            body: body,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [0, 102, 204],
+                textColor: 255,
+                fontStyle: 'bold',
+                halign: 'center',
+                fontSize: 9
+            },
+            bodyStyles: {
+                fontSize: 8,
+                cellPadding: 0.08
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            margin: { left: 0.5, right: 0.5 }
+        });
     }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.7, { align: 'center' });
+        doc.text(`Sibonga Community College - Attendance System`, 4.25, 12.85, { align: 'center' });
+    }
+
+    doc.save(filename.replace('.csv', '.pdf'));
+    showToast('Data exported successfully!', 'success');
 }
 
 // ============================================================
@@ -572,10 +644,89 @@ function backToEvents() {
     document.getElementById('start-event').classList.add('active');
 }
 
+// Export Attendance to PDF
 function exportAttendance() {
     if (currentEventData) {
         const data = gatherAttendanceData();
-        exportToCSV(data, `${currentEventData.name}-Attendance.csv`);
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'in',
+            format: [8.5, 13]
+        });
+
+        addPDFHeader(doc);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('Event Attendance Report', 4.25, 2.3, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text('Event Information:', 0.5, 2.7);
+        
+        doc.setFont(undefined, 'normal');
+        doc.text(`Event Name: ${currentEventData.name}`, 0.5, 2.85);
+        doc.text(`Event Type: ${currentEventData.type}`, 0.5, 3.0);
+        doc.text(`Date: ${new Date(currentEventData.date).toLocaleString()}`, 0.5, 3.15);
+        doc.text(`Session ID: ${currentEventData.id}`, 0.5, 3.3);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 0.5, 3.45);
+
+        // Prepare table data (skip header rows from data)
+        const tableData = data.slice(7).slice(1); // Skip metadata and header row
+
+        if (tableData.length > 0) {
+            doc.autoTable({
+                startY: 3.7,
+                head: [['Time', 'Student ID', 'Name', 'Event Name', 'Status']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 102, 204],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    fontSize: 9
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    cellPadding: 0.08
+                },
+                columnStyles: {
+                    0: { cellWidth: 1.2 },
+                    1: { cellWidth: 1.0 },
+                    2: { cellWidth: 2.0 },
+                    3: { cellWidth: 2.0 },
+                    4: { cellWidth: 1.3, halign: 'center' }
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                didParseCell: function(data) {
+                    if (data.section === 'body' && data.column.index === 4) {
+                        data.cell.styles.textColor = [21, 87, 36];
+                        data.cell.styles.fillColor = [212, 237, 218];
+                    }
+                },
+                margin: { left: 0.5, right: 0.5 }
+            });
+        } else {
+            doc.setFontSize(10);
+            doc.text('No attendance records yet.', 4.25, 4.5, { align: 'center' });
+        }
+
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.7, { align: 'center' });
+            doc.text(`Sibonga Community College - Attendance System`, 4.25, 12.85, { align: 'center' });
+        }
+
+        const filename = `${currentEventData.name.replace(/\s+/g, '-')}-Attendance.pdf`;
+        doc.save(filename);
+        
         showToast('Attendance data exported successfully!', 'success');
     } else {
         showToast('No event data to export', 'error');
@@ -1131,40 +1282,122 @@ function closeDetailsModal() {
     window.currentViewingStudent = null;
 }
 
+// Export Student Report to PDF
 function exportStudentReport() {
     if (!window.currentViewingStudent) return;
     
     const student = window.currentViewingStudent;
-    const data = [
-        ['Student Attendance Report'],
-        ['Generated:', new Date().toLocaleString()],
-        [''],
-        ['Student ID:', student.id],
-        ['Name:', student.name],
-        ['Set:', student.email],
-        ['Year Level:', student.year + ' Year'],
-        ['Course:', student.course || 'N/A'],
-        ['Status:', student.status],
-        [''],
-        ['Total Events:', getTotalEvents()],
-        ['Events Attended:', student.attendanceCount || student.attendance.length],
-        ['Attendance Rate:', (getTotalEvents() > 0 ? Math.round(((student.attendanceCount || student.attendance.length) / getTotalEvents()) * 100) : 0) + '%'],
-        [''],
-        ['Attendance History'],
-        ['Date', 'Event Name', 'Time Scanned', 'Status', 'Remarks']
-    ];
-    
-    student.attendance.forEach(record => {
-        data.push([
-            record.date, 
-            record.event, 
-            record.time, 
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: [8.5, 13]
+    });
+
+    addPDFHeader(doc);
+
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('Student Attendance Report', 4.25, 2.3, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Student Information:', 0.5, 2.7);
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const infoY = 2.9;
+    const lineHeight = 0.18;
+    doc.text(`Student ID: ${student.id}`, 0.5, infoY);
+    doc.text(`Name: ${student.name}`, 0.5, infoY + lineHeight);
+    doc.text(`Set: ${student.email}`, 0.5, infoY + lineHeight * 2);
+    doc.text(`Year Level: ${student.year} Year`, 0.5, infoY + lineHeight * 3);
+    doc.text(`Course: ${student.course || 'N/A'}`, 0.5, infoY + lineHeight * 4);
+    doc.text(`Status: ${student.status}`, 0.5, infoY + lineHeight * 5);
+
+    const totalEvents = getTotalEvents();
+    const attended = student.attendanceCount || student.attendance.length;
+    const attendanceRate = totalEvents > 0 ? Math.round((attended / totalEvents) * 100) : (attended > 0 ? 100 : 0);
+
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Attendance Summary:', 4.5, 2.7);
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Events: ${totalEvents}`, 4.5, infoY);
+    doc.text(`Events Attended: ${attended}`, 4.5, infoY + lineHeight);
+    doc.text(`Attendance Rate: ${attendanceRate}%`, 4.5, infoY + lineHeight * 2);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 4.5, infoY + lineHeight * 3);
+
+    if (student.attendance && student.attendance.length > 0) {
+        const tableData = student.attendance.map(record => [
+            record.date,
+            record.event,
+            record.time,
             record.status,
             record.remarks || ''
         ]);
-    });
+
+        doc.autoTable({
+            startY: 4.2,
+            head: [['Date', 'Event Name', 'Time Scanned', 'Status', 'Remarks']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [0, 102, 204],
+                textColor: 255,
+                fontStyle: 'bold',
+                halign: 'center',
+                fontSize: 9
+            },
+            bodyStyles: {
+                fontSize: 8,
+                cellPadding: 0.08
+            },
+            columnStyles: {
+                0: { cellWidth: 1.0 },
+                1: { cellWidth: 2.5 },
+                2: { cellWidth: 1.0 },
+                3: { cellWidth: 0.9, halign: 'center' },
+                4: { cellWidth: 1.1 }
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 3) {
+                    const status = data.cell.raw;
+                    if (status === 'Present') {
+                        data.cell.styles.textColor = [21, 87, 36];
+                        data.cell.styles.fillColor = [212, 237, 218];
+                    } else if (status === 'Late') {
+                        data.cell.styles.textColor = [133, 100, 4];
+                        data.cell.styles.fillColor = [255, 243, 205];
+                    } else {
+                        data.cell.styles.textColor = [114, 28, 36];
+                        data.cell.styles.fillColor = [248, 215, 218];
+                    }
+                }
+            },
+            margin: { left: 0.5, right: 0.5 }
+        });
+    } else {
+        doc.setFontSize(10);
+        doc.text('No attendance records found for this student.', 4.25, 4.5, { align: 'center' });
+    }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.7, { align: 'center' });
+        doc.text(`Sibonga Community College - Attendance System`, 4.25, 12.85, { align: 'center' });
+    }
+
+    const filename = `${student.id}-${student.name.replace(/\s+/g, '-')}-Attendance-Report.pdf`;
+    doc.save(filename);
     
-    exportToCSV(data, `${student.id}-${student.name.replace(/\s+/g, '-')}-Attendance-Report.csv`);
     showToast('Report exported successfully', 'success');
 }
 

@@ -18,6 +18,8 @@ $user_id = $_SESSION['session_id'];
     <title>Instructor Dashboard - Live Attendance</title>
     <script src="../../script/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="../../css/toast_notifications.css">
     <link rel="stylesheet" href="../../css/instructor.css">
 </head>

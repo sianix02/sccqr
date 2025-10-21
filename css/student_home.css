@@ -423,3 +423,93 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+
+/* css to after adding change password */
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+.change-password-btn {
+    background-color: var(--white);
+    color: var(--primary-blue);
+    border: 2px solid var(--white);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.change-password-btn:hover {
+    background-color: transparent;
+    color: var(--white);
+    border-color: var(--white);
+    transform: translateY(-1px);
+}
+
+.logout-btn {
+    background-color: var(--white);
+    color: var(--primary-blue);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: var(--hover-blue);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .user-info {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .user-details {
+        text-align: left;
+        width: 100%;
+    }
+
+    .user-actions {
+        flex-direction: row;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .change-password-btn,
+    .logout-btn {
+        flex: 1;
+        font-size: 12px;
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+
+    .change-password-btn {
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+}
+
+@media (max-width: 480px) {
+    .change-password-btn,
+    .logout-btn {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+}

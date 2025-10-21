@@ -1,4 +1,9 @@
-// Instructor Dashboard JavaScript - Updated Version
+// ============================================================
+// COMPLETE INSTRUCTOR.JS FILE - WITH ENHANCED PDF EXPORT
+// File Location: C:\laragon\www\sccqr\pages\instructor\instructor.js
+// ============================================================
+
+// Instructor Dashboard JavaScript - Enhanced Version
 class InstructorDashboard {
     constructor() {
         this.attendanceData = [];
@@ -8,6 +13,10 @@ class InstructorDashboard {
         this.lastUpdate = null;
         this.apiBaseUrl = '../../api';
         this.previousDataHash = '';
+        
+        // Image paths for PDF header
+        this.logoPath = '../../images/logo.png';
+        this.sibongaPath = '../../images/sibonga.jpg';
         
         this.init();
     }
@@ -113,7 +122,7 @@ class InstructorDashboard {
         const exportBtn = document.getElementById('export-attendance');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
-                this.exportToExcel();
+                this.exportToPDF();
             });
         }
 
@@ -179,12 +188,10 @@ class InstructorDashboard {
         }
     }
 
-    // Create hash for data comparison
     createDataHash(data) {
         return JSON.stringify(data.map(item => item.id + item.timestamp));
     }
 
-    // Load Attendance Data from Database
     async loadAttendanceData() {
         try {
             this.showLoading(true);
@@ -210,7 +217,6 @@ class InstructorDashboard {
             if (result.success) {
                 const newHash = this.createDataHash(result.data);
                 
-                // Only update if data actually changed
                 if (newHash !== this.previousDataHash) {
                     this.attendanceData = result.data;
                     this.previousDataHash = newHash;
@@ -232,7 +238,6 @@ class InstructorDashboard {
         }
     }
 
-    // Show/Hide Loading State
     showLoading(show) {
         const loadingElement = document.getElementById('loading-state');
         const tableContainer = document.querySelector('.student-list-container');
@@ -246,7 +251,6 @@ class InstructorDashboard {
         }
     }
 
-    // Update Live Statistics
     updateLiveStats(stats) {
         if (!stats) return;
         
@@ -265,7 +269,6 @@ class InstructorDashboard {
         });
     }
 
-    // Filter and Update Display
     filterAndUpdateDisplay() {
         const searchTerm = document.getElementById('student-search')?.value.toLowerCase() || '';
         const statusFilter = document.getElementById('status-filter')?.value || 'all';
@@ -284,7 +287,6 @@ class InstructorDashboard {
         this.updateStudentList();
     }
 
-    // Update Student List Display
     updateStudentList() {
         const tbody = document.getElementById('student-attendance-list');
         
@@ -313,7 +315,6 @@ class InstructorDashboard {
             const statusClass = `status-${entry.status}`;
             const statusText = entry.status.charAt(0).toUpperCase() + entry.status.slice(1);
             
-            // Format time in and time out
             const timeIn = entry.timeIn ? this.formatTime(entry.timeIn) : 'N/A';
             const timeOut = entry.timeOut ? this.formatTime(entry.timeOut) : '--:--';
 
@@ -328,8 +329,7 @@ class InstructorDashboard {
                 <td>${timeOut}</td>
                 <td>
                     <button onclick="dashboard.viewStudentDetails('${entry.studentId}')" 
-                        style="padding: 4px 8px; border: 1px solid #0066cc; background: transparent; 
-                        color: #0066cc; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        class="btn-view-details">
                         View
                     </button>
                 </td>
@@ -339,16 +339,13 @@ class InstructorDashboard {
         });
     }
 
-    // Helper function to format time
     formatTime(timeString) {
         if (!timeString) return 'N/A';
         
-        // If it's already formatted (contains AM/PM), return as is
         if (timeString.includes('AM') || timeString.includes('PM')) {
             return timeString;
         }
         
-        // Parse time string (format: HH:MM:SS)
         const timeParts = timeString.split(':');
         if (timeParts.length < 2) return timeString;
         
@@ -357,93 +354,227 @@ class InstructorDashboard {
         const ampm = hours >= 12 ? 'PM' : 'AM';
         
         hours = hours % 12;
-        hours = hours ? hours : 12; // Convert 0 to 12
+        hours = hours ? hours : 12;
         
         return `${hours}:${minutes} ${ampm}`;
     }
 
-    // Export to Excel with better formatting
-    exportToExcel() {
+    // Enhanced PDF Header with Images
+    async addPDFHeader(doc) {
+        return new Promise((resolve) => {
+            // Header background
+            doc.setFillColor(0, 102, 204);
+            doc.rect(0, 0, 8.5, 1.8, 'F');
+
+            let imagesLoaded = 0;
+            const totalImages = 2;
+
+            const checkComplete = () => {
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    // Header text
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Republic of the Philippines', 4.25, 0.35, { align: 'center' });
+                    doc.text('Province of Cebu', 4.25, 0.5, { align: 'center' });
+                    
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('SIBONGA COMMUNITY COLLEGE', 4.25, 0.75, { align: 'center' });
+                    
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Poblacion, Sibonga, Cebu', 4.25, 0.93, { align: 'center' });
+                    doc.text('Tel. No.: (032) 485-9405', 4.25, 1.08, { align: 'center' });
+                    doc.text('Email: sibongacommunitycollege@gmail.com', 4.25, 1.23, { align: 'center' });
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('QR CODE ATTENDANCE MONITORING SYSTEM', 4.25, 1.5, { align: 'center' });
+                    
+                    resolve();
+                }
+            };
+
+            // Load left logo (SCC Logo)
+            const leftLogo = new Image();
+            leftLogo.crossOrigin = 'Anonymous';
+            leftLogo.onload = () => {
+                doc.addImage(leftLogo, 'PNG', 0.65, 0.55, 0.7, 0.7);
+                checkComplete();
+            };
+            leftLogo.onerror = () => {
+                console.warn('Left logo failed to load');
+                checkComplete();
+            };
+            leftLogo.src = this.logoPath;
+
+            // Load right logo (Sibonga Seal)
+            const rightLogo = new Image();
+            rightLogo.crossOrigin = 'Anonymous';
+            rightLogo.onload = () => {
+                doc.addImage(rightLogo, 'JPEG', 7.15, 0.55, 0.7, 0.7);
+                checkComplete();
+            };
+            rightLogo.onerror = () => {
+                console.warn('Right logo failed to load');
+                checkComplete();
+            };
+            rightLogo.src = this.sibongaPath;
+        });
+    }
+
+    // Enhanced Export to PDF with Proper Tabular Format
+    async exportToPDF() {
         if (this.filteredData.length === 0) {
             this.showNotification('No data to export', 'error');
             return;
         }
 
-        // Create HTML table for Excel
-        let html = `
-            <html xmlns:x="urn:schemas-microsoft-com:office:excel">
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    table { border-collapse: collapse; width: 100%; }
-                    th { background-color: #0066cc; color: white; font-weight: bold; 
-                         padding: 12px; border: 1px solid #ddd; text-align: left; }
-                    td { padding: 10px; border: 1px solid #ddd; }
-                    .present { background-color: #d4edda; color: #155724; }
-                    .late { background-color: #fff3cd; color: #856404; }
-                    .absent { background-color: #f8d7da; color: #721c24; }
-                    tr:nth-child(even) { background-color: #f8f9fa; }
-                    h2 { color: #0066cc; font-family: Arial, sans-serif; }
-                    .header-info { margin-bottom: 20px; color: #666; }
-                </style>
-            </head>
-            <body>
-                <h2>Live Attendance Report</h2>
-                <div class="header-info">
-                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Total Records:</strong> ${this.filteredData.length}</p>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Course/Year</th>
-                            <th>Event</th>
-                            <th>Date</th>
-                            <th>Time In</th>
-                            <th>Time Out</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+        this.showNotification('Generating PDF report...', 'success');
 
-        this.filteredData.forEach(entry => {
-            const timeIn = entry.timeIn ? this.formatTime(entry.timeIn) : 'N/A';
-            const timeOut = entry.timeOut ? this.formatTime(entry.timeOut) : 'N/A';
-            
-            html += `
-                <tr>
-                    <td>${entry.studentId}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.course}</td>
-                    <td>${entry.event}</td>
-                    <td>${entry.date}</td>
-                    <td>${timeIn}</td>
-                    <td>${timeOut}</td>
-                    <td class="${entry.status}">${entry.status.toUpperCase()}</td>
-                </tr>
-            `;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'in',
+            format: [8.5, 13] // Legal size
         });
 
-        html += `
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
+        // Add header with images
+        await this.addPDFHeader(doc);
 
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Attendance_Report_${new Date().toISOString().split('T')[0]}.xls`;
-        link.click();
+        // Title
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('LIVE ATTENDANCE REPORT', 4.25, 2.2, { align: 'center' });
+
+        // Report metadata
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const timeStr = today.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
         
-        this.showNotification('Attendance data exported successfully!', 'success');
+        doc.text(`Generated: ${dateStr} at ${timeStr}`, 1, 2.5);
+        doc.text(`Total Records: ${this.filteredData.length}`, 1, 2.65);
+
+        // Prepare table data
+        const tableData = this.filteredData.map((entry, index) => [
+            index + 1,
+            entry.studentId,
+            entry.name,
+            entry.course,
+            entry.event,
+            entry.date,
+            this.formatTime(entry.timeIn) || 'N/A',
+            this.formatTime(entry.timeOut) || '--:--',
+            entry.status.toUpperCase()
+        ]);
+
+        // Add table with improved styling
+        doc.autoTable({
+            startY: 2.85,
+            head: [['#', 'Student ID', 'Name', 'Course/Year', 'Event', 'Date', 'Time In', 'Time Out', 'Status']],
+            body: tableData,
+            theme: 'grid',
+            styles: {
+                fontSize: 8,
+                cellPadding: 0.06,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.01,
+            },
+            headStyles: {
+                fillColor: [0, 102, 204],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                halign: 'center',
+                valign: 'middle',
+                fontSize: 9,
+                cellPadding: 0.08,
+            },
+            bodyStyles: {
+                fontSize: 8,
+                cellPadding: 0.06,
+                valign: 'middle',
+            },
+            columnStyles: {
+                0: { cellWidth: 0.35, halign: 'center' },  // #
+                1: { cellWidth: 0.85, halign: 'center' },  // Student ID
+                2: { cellWidth: 1.4 },                      // Name
+                3: { cellWidth: 0.95 },                     // Course/Year
+                4: { cellWidth: 1.2 },                      // Event
+                5: { cellWidth: 0.75, halign: 'center' },  // Date
+                6: { cellWidth: 0.7, halign: 'center' },   // Time In
+                7: { cellWidth: 0.7, halign: 'center' },   // Time Out
+                8: { cellWidth: 0.65, halign: 'center' }   // Status
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            didParseCell: function(data) {
+                // Style status column
+                if (data.section === 'body' && data.column.index === 8) {
+                    const status = data.cell.raw.toLowerCase();
+                    data.cell.styles.fontStyle = 'bold';
+                    
+                    if (status === 'present') {
+                        data.cell.styles.textColor = [21, 87, 36];
+                        data.cell.styles.fillColor = [212, 237, 218];
+                    } else if (status === 'late') {
+                        data.cell.styles.textColor = [133, 100, 4];
+                        data.cell.styles.fillColor = [255, 243, 205];
+                    } else if (status === 'absent') {
+                        data.cell.styles.textColor = [114, 28, 36];
+                        data.cell.styles.fillColor = [248, 215, 218];
+                    }
+                }
+                
+                // Bold font for student ID and name
+                if (data.section === 'body' && (data.column.index === 1 || data.column.index === 2)) {
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            },
+            margin: { left: 1, right: 1, top: 1, bottom: 1 },
+            tableWidth: 6.5,
+        });
+
+        // Add footer with page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            // Footer line
+            doc.setDrawColor(0, 102, 204);
+            doc.setLineWidth(0.02);
+            doc.line(1, 12, 7.5, 12);
+            
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.3, { align: 'center' });
+            doc.text('Sibonga Community College - QR Attendance System', 4.25, 12.5, { align: 'center' });
+            
+            // Add printed by info
+            doc.setFontSize(7);
+            doc.text(`Printed: ${dateStr} at ${timeStr}`, 7.5, 12.7, { align: 'right' });
+        }
+
+        // Save PDF
+        const filename = `Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+        
+        this.showNotification('Attendance report exported successfully!', 'success');
     }
 
-    // View Student Details
     viewStudentDetails(studentId) {
         const studentData = this.filteredData.filter(entry => entry.studentId == studentId);
         if (studentData.length === 0) return;
@@ -455,7 +586,6 @@ class InstructorDashboard {
         alert(`Student Details for ${studentId}:\n\nName: ${student.name}\nCourse: ${student.course}\nTotal Check-ins: ${totalCheckins}\nLatest: ${latestCheckin}`);
     }
 
-    // Auto-refresh every 15 seconds (reduced to prevent flickering)
     startAutoRefresh() {
         this.refreshInterval = setInterval(() => {
             if (document.getElementById('live-attendance')?.classList.contains('active')) {
@@ -471,7 +601,6 @@ class InstructorDashboard {
         }
     }
 
-    // Enhanced Notification System
     showNotification(message, type = 'success') {
         const notification = document.createElement('div');
         const icon = type === 'success' ? '✓' : '✕';
@@ -519,8 +648,9 @@ class InstructorDashboard {
     }
 }
 
-// Class Management Module for Instructor Dashboard
-// Add this to instructor.js or create as separate module
+// ============================================================
+// CLASS MANAGEMENT MODULE
+// ============================================================
 
 class ClassManagement {
     constructor(dashboard) {
@@ -529,6 +659,8 @@ class ClassManagement {
         this.filteredData = [];
         this.instructorInfo = null;
         this.isLoading = false;
+        this.logoPath = '../../images/logo.png';
+        this.sibongaPath = '../../images/sibonga.jpg';
         
         this.init();
     }
@@ -539,7 +671,6 @@ class ClassManagement {
     }
 
     attachEventListeners() {
-        // Search input
         const searchInput = document.getElementById('class-student-search');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -547,7 +678,6 @@ class ClassManagement {
             });
         }
 
-        // Sort select
         const sortSelect = document.getElementById('class-sort-students');
         if (sortSelect) {
             sortSelect.addEventListener('change', (e) => {
@@ -555,7 +685,6 @@ class ClassManagement {
             });
         }
 
-        // Refresh button
         const refreshBtn = document.getElementById('class-refresh-students');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
@@ -564,7 +693,6 @@ class ClassManagement {
             });
         }
 
-        // Export button
         const exportBtn = document.getElementById('class-export-btn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
@@ -572,7 +700,6 @@ class ClassManagement {
             });
         }
 
-        // Modal close buttons
         document.getElementById('class-close-details-modal')?.addEventListener('click', () => {
             this.closeDetailsModal();
         });
@@ -581,7 +708,6 @@ class ClassManagement {
             this.closeDetailsModal();
         });
 
-        // Export student report
         document.getElementById('class-export-student-report')?.addEventListener('click', () => {
             this.exportStudentReport();
         });
@@ -696,8 +822,7 @@ class ClassManagement {
                         </span>
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
-                        <button class="btn" style="font-size: 11px; padding: 6px 10px;" 
-                                onclick="classManagement.viewStudentDetails('${student.id}')">
+                        <button class="btn-view-details" onclick="classManagement.viewStudentDetails('${student.id}')">
                             View Details
                         </button>
                     </td>
@@ -843,140 +968,370 @@ class ClassManagement {
         this.currentViewingStudent = null;
     }
 
-    exportClassList() {
+    // Enhanced PDF Header with Images
+    async addPDFHeader(doc) {
+        return new Promise((resolve) => {
+            // Header background
+            doc.setFillColor(0, 102, 204);
+            doc.rect(0, 0, 8.5, 1.8, 'F');
+
+            let imagesLoaded = 0;
+            const totalImages = 2;
+
+            const checkComplete = () => {
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    // Header text
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Republic of the Philippines', 4.25, 0.35, { align: 'center' });
+                    doc.text('Province of Cebu', 4.25, 0.5, { align: 'center' });
+                    
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('SIBONGA COMMUNITY COLLEGE', 4.25, 0.75, { align: 'center' });
+                    
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Poblacion, Sibonga, Cebu', 4.25, 0.93, { align: 'center' });
+                    doc.text('Tel. No.: (032) 485-9405', 4.25, 1.08, { align: 'center' });
+                    doc.text('Email: sibongacommunitycollege@gmail.com', 4.25, 1.23, { align: 'center' });
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('QR CODE ATTENDANCE MONITORING SYSTEM', 4.25, 1.5, { align: 'center' });
+                    
+                    resolve();
+                }
+            };
+
+            // Load left logo (SCC Logo)
+            const leftLogo = new Image();
+            leftLogo.crossOrigin = 'Anonymous';
+            leftLogo.onload = () => {
+                doc.addImage(leftLogo, 'PNG', 0.65, 0.55, 0.7, 0.7);
+                checkComplete();
+            };
+            leftLogo.onerror = () => {
+                console.warn('Left logo failed to load');
+                checkComplete();
+            };
+            leftLogo.src = this.logoPath;
+
+            // Load right logo (Sibonga Seal)
+            const rightLogo = new Image();
+            rightLogo.crossOrigin = 'Anonymous';
+            rightLogo.onload = () => {
+                doc.addImage(rightLogo, 'JPEG', 7.15, 0.55, 0.7, 0.7);
+                checkComplete();
+            };
+            rightLogo.onerror = () => {
+                console.warn('Right logo failed to load');
+                checkComplete();
+            };
+            rightLogo.src = this.sibongaPath;
+        });
+    }
+
+    // Export Class List to PDF
+    async exportClassList() {
         if (this.studentsData.length === 0) {
             this.dashboard.showNotification('No data to export', 'error');
             return;
         }
 
+        this.dashboard.showNotification('Generating class list PDF...', 'success');
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'in',
+            format: [8.5, 13]
+        });
+
         const position = this.instructorInfo?.position || 'Instructor';
         const department = this.instructorInfo?.department || '';
         const yearLevel = this.instructorInfo?.yearLevel || '';
 
-        let html = `
-            <html xmlns:x="urn:schemas-microsoft-com:office:excel">
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    table { border-collapse: collapse; width: 100%; }
-                    th { background-color: #0066cc; color: white; font-weight: bold; 
-                         padding: 12px; border: 1px solid #ddd; text-align: left; }
-                    td { padding: 10px; border: 1px solid #ddd; }
-                    tr:nth-child(even) { background-color: #f8f9fa; }
-                    h2 { color: #0066cc; font-family: Arial, sans-serif; }
-                    .header-info { margin-bottom: 20px; color: #666; }
-                </style>
-            </head>
-            <body>
-                <h2>Class List Report</h2>
-                <div class="header-info">
-                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Position:</strong> ${position}</p>
-                    <p><strong>Department:</strong> ${department}</p>
-                    <p><strong>Year Level:</strong> ${yearLevel}</p>
-                    <p><strong>Total Students:</strong> ${this.studentsData.length}</p>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Set</th>
-                            <th>Year Level</th>
-                            <th>Course</th>
-                            <th>Attendance Count</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+        await this.addPDFHeader(doc);
 
-        this.studentsData.forEach(student => {
-            html += `
-                <tr>
-                    <td>${student.id}</td>
-                    <td>${student.name}</td>
-                    <td>${student.set}</td>
-                    <td>${student.year}</td>
-                    <td>${student.course}</td>
-                    <td>${student.attendanceCount || 0}</td>
-                    <td>${student.status}</td>
-                </tr>
-            `;
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('CLASS LIST REPORT', 4.25, 2.2, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const timeStr = today.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        doc.text(`Generated: ${dateStr} at ${timeStr}`, 1, 2.5);
+        doc.text(`Instructor: ${position}`, 1, 2.65);
+        doc.text(`Department: ${department}`, 1, 2.8);
+        doc.text(`Year Level: ${yearLevel}`, 1, 2.95);
+        doc.text(`Total Students: ${this.studentsData.length}`, 1, 3.1);
+
+        const tableData = this.studentsData.map((student, index) => [
+            index + 1,
+            student.id,
+            student.name,
+            student.set,
+            student.year,
+            student.course,
+            student.attendanceCount || 0,
+            student.status
+        ]);
+
+        doc.autoTable({
+            startY: 3.3,
+            head: [['#', 'Student ID', 'Name', 'Set', 'Year', 'Course', 'Attendance', 'Status']],
+            body: tableData,
+            theme: 'grid',
+            styles: {
+                fontSize: 8,
+                cellPadding: 0.06,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.01,
+            },
+            headStyles: {
+                fillColor: [0, 102, 204],
+                textColor: 255,
+                fontStyle: 'bold',
+                halign: 'center',
+                valign: 'middle',
+                fontSize: 9,
+                cellPadding: 0.08,
+            },
+            bodyStyles: {
+                fontSize: 8,
+                cellPadding: 0.06,
+                valign: 'middle',
+            },
+            columnStyles: {
+                0: { cellWidth: 0.35, halign: 'center' },
+                1: { cellWidth: 0.9, halign: 'center' },
+                2: { cellWidth: 1.6, fontStyle: 'bold' },
+                3: { cellWidth: 0.6, halign: 'center' },
+                4: { cellWidth: 0.6, halign: 'center' },
+                5: { cellWidth: 1.4 },
+                6: { cellWidth: 0.8, halign: 'center' },
+                7: { cellWidth: 0.7, halign: 'center' }
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 7) {
+                    const status = data.cell.raw;
+                    data.cell.styles.fontStyle = 'bold';
+                    if (status === 'Active') {
+                        data.cell.styles.textColor = [21, 87, 36];
+                        data.cell.styles.fillColor = [212, 237, 218];
+                    } else {
+                        data.cell.styles.textColor = [114, 28, 36];
+                        data.cell.styles.fillColor = [248, 215, 218];
+                    }
+                }
+            },
+            margin: { left: 1, right: 1, top: 1, bottom: 1 },
+            tableWidth: 6.5,
         });
 
-        html += `
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            doc.setDrawColor(0, 102, 204);
+            doc.setLineWidth(0.02);
+            doc.line(1, 12, 7.5, 12);
+            
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.3, { align: 'center' });
+            doc.text('Sibonga Community College - QR Attendance System', 4.25, 12.5, { align: 'center' });
+            
+            doc.setFontSize(7);
+            doc.text(`Printed: ${dateStr} at ${timeStr}`, 7.5, 12.7, { align: 'right' });
+        }
 
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Class_List_${department}_${yearLevel}_${new Date().toISOString().split('T')[0]}.xls`;
-        link.click();
+        const filename = `Class_List_${department}_${yearLevel}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
         
         this.dashboard.showNotification('Class list exported successfully!', 'success');
     }
 
-    exportStudentReport() {
+    // Export Student Report to PDF
+    async exportStudentReport() {
         if (!this.currentViewingStudent) return;
         
         const student = this.currentViewingStudent;
-        const data = [
-            ['Student Attendance Report'],
-            ['Generated:', new Date().toLocaleString()],
-            ['Instructor:', this.instructorInfo?.position || 'N/A'],
-            [''],
-            ['Student ID:', student.id],
-            ['Name:', student.name],
-            ['Set:', student.set],
-            ['Year Level:', student.year],
-            ['Course:', student.course],
-            ['Status:', student.status],
-            [''],
-            ['Total Events:', this.getTotalEvents()],
-            ['Events Attended:', student.attendanceCount || 0],
-            ['Attendance Rate:', (this.getTotalEvents() > 0 ? Math.round(((student.attendanceCount || 0) / this.getTotalEvents()) * 100) : 0) + '%'],
-            [''],
-            ['Attendance History'],
-            ['Date', 'Event Name', 'Time Scanned', 'Status']
-        ];
         
-        if (student.attendance) {
-            student.attendance.forEach(record => {
-                data.push([
-                    record.date, 
-                    record.event, 
-                    record.time, 
-                    record.status
-                ]);
-            });
-        }
+        this.dashboard.showNotification('Generating student report...', 'success');
         
-        this.exportToCSV(data, `${student.id}-${student.name.replace(/\s+/g, '-')}-Attendance-Report.csv`);
-        this.dashboard.showNotification('Report exported successfully', 'success');
-    }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'in',
+            format: [8.5, 13]
+        });
 
-    exportToCSV(data, filename) {
-        const csvContent = data.map(row => 
-            row.map(cell => `"${cell}"`).join(',')
-        ).join('\n');
+        await this.addPDFHeader(doc);
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('STUDENT ATTENDANCE REPORT', 4.25, 2.2, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text('Student Information:', 1, 2.6);
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const infoY = 2.8;
+        const lineHeight = 0.18;
+        doc.text(`Student ID: ${student.id}`, 1, infoY);
+        doc.text(`Name: ${student.name}`, 1, infoY + lineHeight);
+        doc.text(`Set: ${student.set}`, 1, infoY + lineHeight * 2);
+        doc.text(`Year Level: ${student.year}`, 1, infoY + lineHeight * 3);
+        doc.text(`Course: ${student.course}`, 1, infoY + lineHeight * 4);
+        doc.text(`Status: ${student.status}`, 1, infoY + lineHeight * 5);
+
+        const totalEvents = this.getTotalEvents();
+        const attended = student.attendanceCount || 0;
+        const attendanceRate = totalEvents > 0 ? Math.round((attended / totalEvents) * 100) : (attended > 0 ? 100 : 0);
+
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text('Attendance Summary:', 4.7, 2.6);
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Total Events: ${totalEvents}`, 4.7, infoY);
+        doc.text(`Events Attended: ${attended}`, 4.7, infoY + lineHeight);
+        doc.text(`Attendance Rate: ${attendanceRate}%`, 4.7, infoY + lineHeight * 2);
         
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const timeStr = today.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        doc.text(`Generated: ${dateStr}`, 4.7, infoY + lineHeight * 3);
+
+        if (student.attendance && student.attendance.length > 0) {
+            const tableData = student.attendance.map((record, index) => [
+                index + 1,
+                record.date,
+                record.event,
+                record.time,
+                record.status
+            ]);
+
+            doc.autoTable({
+                startY: 4.0,
+                head: [['#', 'Date', 'Event Name', 'Time Scanned', 'Status']],
+                body: tableData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 0.06,
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.01,
+                },
+                headStyles: {
+                    fillColor: [0, 102, 204],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    valign: 'middle',
+                    fontSize: 9,
+                    cellPadding: 0.08,
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    cellPadding: 0.06,
+                    valign: 'middle',
+                },
+                columnStyles: {
+                    0: { cellWidth: 0.35, halign: 'center' },
+                    1: { cellWidth: 1.0, halign: 'center' },
+                    2: { cellWidth: 2.6 },
+                    3: { cellWidth: 1.1, halign: 'center' },
+                    4: { cellWidth: 0.9, halign: 'center' }
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                didParseCell: function(data) {
+                    if (data.section === 'body' && data.column.index === 4) {
+                        const status = data.cell.raw;
+                        data.cell.styles.fontStyle = 'bold';
+                        
+                        if (status === 'Present') {
+                            data.cell.styles.textColor = [21, 87, 36];
+                            data.cell.styles.fillColor = [212, 237, 218];
+                        } else if (status === 'Late') {
+                            data.cell.styles.textColor = [133, 100, 4];
+                            data.cell.styles.fillColor = [255, 243, 205];
+                        } else {
+                            data.cell.styles.textColor = [114, 28, 36];
+                            data.cell.styles.fillColor = [248, 215, 218];
+                        }
+                    }
+                },
+                margin: { left: 1, right: 1, top: 1, bottom: 1 },
+                tableWidth: 5.95,
+            });
+        } else {
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('No attendance records found for this student.', 4.25, 4.5, { align: 'center' });
+        }
+
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            doc.setDrawColor(0, 102, 204);
+            doc.setLineWidth(0.02);
+            doc.line(1, 12, 7.5, 12);
+            
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.3, { align: 'center' });
+            doc.text('Sibonga Community College - QR Attendance System', 4.25, 12.5, { align: 'center' });
+            
+            doc.setFontSize(7);
+            doc.text(`Printed: ${dateStr} at ${timeStr}`, 7.5, 12.7, { align: 'right' });
+        }
+
+        const filename = `${student.id}_${student.name.replace(/\s+/g, '_')}_Attendance_Report.pdf`;
+        doc.save(filename);
+        
+        this.dashboard.showNotification('Student report exported successfully!', 'success');
     }
 }
 
-// Initialize Class Management when dashboard is ready
-// Add this initialization to the existing instructor.js file
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
-// Initialize Dashboard
 let dashboard;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -998,7 +1353,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize Class Management Module
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for dashboard to be initialized
     setTimeout(() => {
         if (typeof dashboard !== 'undefined') {
             window.classManagement = new ClassManagement(dashboard);
@@ -1006,6 +1360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
+// Public API
 window.InstructorDashboard = {
     refresh: function() {
         if (dashboard) {

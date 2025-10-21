@@ -43,7 +43,10 @@ session_start();
                     <div class="user-course">Course: BSIT</div>
                     <div class="user-sex">Sex: Male</div>
                 </div>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
+                <div class="user-actions">
+                    <button class="change-password-btn" onclick="window.location.href='change_password.php'">🔒 Change Password</button>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
             </div>
         </div>
     </header>
