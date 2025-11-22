@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <!-- Filter Controls (Removed Time Frame Controls) -->
+    
     <div class="content-card">
         <div class="time-controls">
             <div class="filter-controls">
@@ -39,7 +39,7 @@
                     <span>🔄</span> Refresh
                 </button>
                 <button class="export-btn" id="export-attendance">
-                    <span>📊</span> Export to Excel
+                    <span>📊</span> Export Attendance
                 </button>
             </div>
         </div>
@@ -63,7 +63,6 @@
                         <th>Event</th>
                         <th>Time In</th>
                         <th>Time Out</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="student-attendance-list">

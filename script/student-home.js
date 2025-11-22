@@ -2,13 +2,15 @@
 class AttendanceDataManager {
     constructor() {
         this.attendanceData = [];
+        this.allRecords = [];
         this.activeSession = null;
         this.stats = null;
         this.isLoading = false;
+        this.eventFilters = [];
+        this.currentFilter = null;
     }
 
     async loadAttendanceRecords(forceRefresh = false) {
-        // Prevent multiple simultaneous calls
         if (this.isLoading && !forceRefresh) {
             return { success: true, cached: true };
         }
@@ -19,30 +21,93 @@ class AttendanceDataManager {
             const response = await $.ajax({
                 url: '../../sql_php/get_attendance_records.php',
                 type: 'GET',
-                dataType: 'json'
+                dataType: 'json',
+                timeout: 10000,
+                cache: false
             });
 
-            if (response.success) {
-                this.attendanceData = response.records.map(record => ({
-                    date: record.date,
+            console.log('API Response:', response);
+
+            if (response && response.success) {
+                // Store all records
+                this.allRecords = response.records.map(record => ({
+                    dateTime: record.date_time_formatted,
                     activity: record.event_name,
+                    description: record.description,
+                    scheduledTime: record.scheduled_time,
                     timeIn: record.time_in,
                     timeOut: record.time_out,
-                    status: record.remarks || 'present', // remarks now contains: present, late, or absent
-                    remarks: record.is_active ? 'Active - Time out required' : 'Completed'
+                    status: record.status,
+                    remarks: record.remarks,
+                    isActive: record.is_active
                 }));
 
-                this.activeSession = response.active_session;
+                // Extract unique event descriptions for filtering
+                this.eventFilters = response.event_filters || [];
+
+                this.attendanceData = [...this.allRecords];
+
+                if (response.active_session) {
+                    if (typeof response.active_session === 'object') {
+                        this.activeSession = response.active_session.event_name;
+                    } else {
+                        this.activeSession = response.active_session;
+                    }
+                } else {
+                    this.activeSession = null;
+                }
+                
                 this.stats = response.stats;
                 
+                console.log('✅ Loaded records:', this.attendanceData.length);
+                console.log('✅ Available filters:', this.eventFilters);
+                console.log('✅ Active session:', this.activeSession);
+                
+                this.isLoading = false;
+                return response;
+            } else {
+                console.error('API returned error:', response.error);
                 this.isLoading = false;
                 return response;
             }
         } catch (error) {
             console.error('Error loading attendance records:', error);
             this.isLoading = false;
-            return { success: false, error: error };
+            
+            return { 
+                success: false, 
+                error: error.responseJSON?.error || error.statusText || 'Network error',
+                details: {
+                    status: error.status,
+                    statusText: error.statusText,
+                    responseText: error.responseText
+                }
+            };
         }
+    }
+
+    // Filter records by event description
+    filterByDescription(description) {
+        if (!description || description === 'all') {
+            this.attendanceData = [...this.allRecords];
+            this.currentFilter = null;
+        } else {
+            this.attendanceData = this.allRecords.filter(record => 
+                record.description === description
+            );
+            this.currentFilter = description;
+        }
+        
+        console.log('🔍 Filtered to', this.attendanceData.length, 'records');
+        return this.attendanceData;
+    }
+
+    getAvailableFilters() {
+        return this.eventFilters;
+    }
+
+    getCurrentFilter() {
+        return this.currentFilter;
     }
 
     async recordTimeIn(eventName, scheduledTime, actualTime, remarks) {
@@ -56,13 +121,15 @@ class AttendanceDataManager {
                     event_name: eventName,
                     scheduled_time: scheduledTime,
                     actual_time: actualTime,
-                    remarks: remarks // This is the status: present, late, or absent
+                    remarks: remarks
                 }
             });
 
-            // Update active session immediately without reloading
             if (response.success) {
                 this.activeSession = eventName;
+                console.log('✅ Time In recorded:', eventName);
+            } else {
+                console.error('❌ Time In failed:', response.error);
             }
 
             return response;
@@ -85,9 +152,11 @@ class AttendanceDataManager {
                 }
             });
 
-            // Clear active session immediately without reloading
             if (response.success) {
                 this.activeSession = null;
+                console.log('✅ Time Out recorded:', eventName);
+            } else {
+                console.error('❌ Time Out failed:', response.error);
             }
 
             return response;
@@ -103,31 +172,50 @@ class AttendanceDataManager {
 
     calculateTimeDifference(scheduledTime, actualTime) {
         const parseTime = (timeStr) => {
-            const [time, period] = timeStr.split(' ');
+            if (!timeStr) return 0;
+            const [time, period] = timeStr.trim().split(' ');
             let [hours, minutes] = time.split(':').map(Number);
             if (period === 'PM' && hours !== 12) hours += 12;
             if (period === 'AM' && hours === 12) hours = 0;
             return hours * 60 + minutes;
         };
 
-        const scheduledMinutes = parseTime(scheduledTime);
-        const actualMinutes = parseTime(actualTime);
-        
-        return actualMinutes - scheduledMinutes;
+        try {
+            const scheduledMinutes = parseTime(scheduledTime);
+            const actualMinutes = parseTime(actualTime);
+            const diff = actualMinutes - scheduledMinutes;
+            console.log('⏰ Time diff:', scheduledTime, 'vs', actualTime, '=', diff, 'minutes');
+            return diff;
+        } catch (error) {
+            console.error('Error parsing time:', error);
+            return 0;
+        }
     }
 
+    // FIX: LATE DETECTION - Only mark late if 30+ minutes AFTER scheduled time
     determineAttendanceStatus(scheduledTime, actualTime) {
+        if (!scheduledTime || scheduledTime === 'N/A') {
+            console.log('📝 No scheduled time, marking as PRESENT');
+            return 'present';
+        }
+
         const diffMinutes = this.calculateTimeDifference(scheduledTime, actualTime);
         
+        // ONLY mark LATE if 30 or more minutes AFTER scheduled time
         if (diffMinutes >= 30) {
-            return 'late'; // Returns: late
+            console.log('⚠️ LATE: Arrived', diffMinutes, 'minutes after scheduled time');
+            return 'late';
+        } else if (diffMinutes >= 0) {
+            console.log('✅ PRESENT: Arrived on time or early (', diffMinutes, 'min before)');
+            return 'present';
         } else {
-            return 'present'; // Returns: present
+            console.log('✅ PRESENT: Early arrival');
+            return 'present';
         }
     }
 
     hasActiveSession() {
-        return this.activeSession !== null;
+        return this.activeSession !== null && this.activeSession !== undefined;
     }
 
     getActiveSession() {
@@ -135,54 +223,57 @@ class AttendanceDataManager {
     }
 
     getStats() {
-        // Use cached stats if available
         if (this.stats) {
             return {
                 total: parseInt(this.stats.total) || 0,
                 present: parseInt(this.stats.present) || 0,
                 absent: parseInt(this.stats.absent) || 0,
                 late: parseInt(this.stats.late) || 0,
-                attendanceRate: this.stats.total > 0 ? 
-                    Math.round((parseInt(this.stats.completed) / parseInt(this.stats.total)) * 100) : 0
+                pending: parseInt(this.stats.pending) || 0,
+                attendanceRate: this.stats.completion_rate || 0
             };
         }
 
-        // Fallback to calculating from data
         const total = this.attendanceData.length;
         const present = this.attendanceData.filter(record => 
-            record.status === 'present' && record.timeOut !== 'Pending'
+            record.status === 'present'
         ).length;
         const late = this.attendanceData.filter(record => 
-            record.status === 'late' && record.timeOut !== 'Pending'
+            record.status === 'late'
         ).length;
         const absent = this.attendanceData.filter(record => 
             record.status === 'absent'
         ).length;
+        const pending = this.attendanceData.filter(record => 
+            record.status === 'pending'
+        ).length;
         const attendanceRate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
-        return { total, present, absent, late, attendanceRate };
+        return { total, present, absent, late, pending, attendanceRate };
     }
 
-    // Add new record locally without full reload
-    addLocalRecord(eventName, timeIn, status) {
+    addLocalRecord(eventName, timeIn, status, dateTimeFormatted, scheduledTime) {
         this.attendanceData.unshift({
-            date: new Date().toISOString().split('T')[0],
+            dateTime: dateTimeFormatted,
             activity: eventName,
+            description: 'N/A',
+            scheduledTime: scheduledTime,
             timeIn: timeIn,
             timeOut: 'Pending',
-            status: status, // present, late, or absent
-            remarks: 'Active - Time out required'
+            status: status,
+            remarks: 'Active - Time out required',
+            isActive: true
         });
     }
 
-    // Update existing record locally
     updateLocalRecord(eventName, timeOut) {
         const record = this.attendanceData.find(r => 
             r.activity === eventName && r.timeOut === 'Pending'
         );
         if (record) {
             record.timeOut = timeOut;
-            record.remarks = 'Completed';
+            record.remarks = 'Completed Attendance';
+            record.isActive = false;
         }
     }
 }
@@ -219,7 +310,7 @@ class QRScannerManager {
 
         this.html5QrcodeScanner.render(
             (decodedText, decodedResult) => {
-                console.log(`QR Code detected: ${decodedText}`);
+                console.log('📱 QR Code detected:', decodedText);
                 this.stopScanning();
                 if (this.onScanSuccess) {
                     this.onScanSuccess(decodedText, decodedResult);
@@ -228,7 +319,7 @@ class QRScannerManager {
             (error) => {
                 if (!error.includes('QR code parse error') && 
                     !error.includes('No QR code found')) {
-                    console.warn(`QR Code scan error: ${error}`);
+                    console.warn('⚠️ QR Code scan error:', error);
                     if (this.onScanError) {
                         this.onScanError(error);
                     }
@@ -242,9 +333,9 @@ class QRScannerManager {
     stopScanning() {
         if (this.html5QrcodeScanner && this.isScanning) {
             this.html5QrcodeScanner.clear().then(() => {
-                console.log("QR Code scanner cleared successfully.");
+                console.log("✅ QR Code scanner cleared");
             }).catch(error => {
-                console.error("Failed to clear QR Code scanner.", error);
+                console.error("❌ Failed to clear QR Code scanner:", error);
             });
             
             this.html5QrcodeScanner = null;
@@ -272,13 +363,62 @@ class UIManager {
             (error) => this.handleScanError(error)
         );
 
-        // Single load on initialization
-        await this.attendanceManager.loadAttendanceRecords();
+        console.log('📊 Loading attendance records...');
+        const result = await this.attendanceManager.loadAttendanceRecords(true);
         
-        this.updateAttendanceStats();
-        this.populateAttendanceTable();
+        console.log('Load result:', result);
+        
+        if (result && result.success) {
+            console.log('✅ Attendance records loaded successfully');
+            this.setupFilterDropdown();
+            this.updateAttendanceStats();
+            this.populateAttendanceTable();
+        } else {
+            console.error('❌ Failed to load attendance records:', result);
+            
+            let errorMsg = 'Error loading attendance records. ';
+            if (result && result.details) {
+                errorMsg += `Status: ${result.details.status || 'unknown'}. `;
+            }
+            
+            $('#attendanceTableBody').html(
+                `<tr><td colspan="6" style="text-align: center; color: red;">` +
+                errorMsg +
+                `<br><button onclick="location.reload()" style="margin-top: 10px;">Refresh Page</button>` +
+                `</td></tr>`
+            );
+        }
+        
         this.bindEventListeners();
         this.updateScanButtonState();
+    }
+
+    setupFilterDropdown() {
+        const filters = this.attendanceManager.getAvailableFilters();
+        const filterContainer = $('#filterContainer');
+        
+        if (filterContainer.length === 0 || filters.length === 0) {
+            console.log('No filters available');
+            filterContainer.html('<span style="color: #666;">No event types available</span>');
+            return;
+        }
+
+        let filterHTML = '<select id="eventFilter" class="filter-select"><option value="all">All Events</option>';
+        
+        filters.forEach(filter => {
+            filterHTML += `<option value="${filter}">${filter}</option>`;
+        });
+        
+        filterHTML += '</select>';
+        filterContainer.html(filterHTML);
+
+        $('#eventFilter').on('change', (e) => {
+            const selectedFilter = $(e.target).val();
+            console.log('🔍 Applying filter:', selectedFilter);
+            this.attendanceManager.filterByDescription(selectedFilter);
+            this.updateAttendanceStats();
+            this.populateAttendanceTable();
+        });
     }
 
     bindEventListeners() {
@@ -286,10 +426,13 @@ class UIManager {
         $('#timeOutBtn').click(() => this.startTimeOutScan());
         $('#stopScanBtn').click(() => this.stopScanning());
         $('#logoutBtn').click(() => this.handleLogout());
+        $('#exportPdfBtn').click(() => this.exportToCSV());
     }
 
     updateScanButtonState() {
         const hasActiveSession = this.attendanceManager.hasActiveSession();
+        console.log('🔍 Has active session:', hasActiveSession);
+        
         if (hasActiveSession) {
             $('#timeInBtn').addClass('hidden');
             $('#timeOutBtn').removeClass('hidden');
@@ -351,11 +494,12 @@ class UIManager {
         $('#scanResult').removeClass('status-info status-success status-error')
                       .addClass('hidden');
         
+        this.currentScanMode = null;
         this.updateScanButtonState();
     }
 
     async handleScanSuccess(decodedText) {
-        console.log('QR Code scanned:', decodedText);
+        console.log('✅ QR Code scanned:', decodedText);
         
         this.scannerManager.stopScanning();
         
@@ -416,14 +560,19 @@ class UIManager {
                 const response = await this.attendanceManager.recordTimeOut(activityName, time24);
                 
                 if (response.success) {
-                    $('#scanResult').text(`✅ Time Out recorded at ${timeString} for ${activityName}`);
+                    const finalStatus = response.remarks || 'present';
+                    $('#scanResult').text(`✅ Time Out recorded at ${timeString} - Status: ${finalStatus.toUpperCase()}`);
                     
-                    // Update locally without full reload
                     this.attendanceManager.updateLocalRecord(activityName, timeString);
                     
-                    this.updateAttendanceStats();
-                    this.populateAttendanceTable();
-                    this.updateScanButtonState();
+                    // REFRESH DATA FROM DATABASE
+                    setTimeout(() => {
+                        this.attendanceManager.loadAttendanceRecords(true).then(() => {
+                            this.updateAttendanceStats();
+                            this.populateAttendanceTable();
+                            this.updateScanButtonState();
+                        });
+                    }, 1000);
                 } else {
                     $('#scanResult').removeClass('status-success')
                                   .addClass('status-error')
@@ -472,22 +621,29 @@ class UIManager {
                     activityName, 
                     scheduledTime, 
                     time24,
-                    attendanceStatus // This is now just: 'present' or 'late'
+                    attendanceStatus
                 );
                 
                 if (response.success) {
                     const statusMessage = attendanceStatus === 'late' 
-                        ? `⚠️ Time In recorded at ${timeString} (LATE)`
+                        ? `⚠️ Time In recorded at ${timeString} (LATE - 30+ minutes)`
                         : `✅ Time In recorded at ${timeString} (On Time)`;
                     
                     $('#scanResult').text(statusMessage);
                     
-                    // Add locally without full reload
-                    this.attendanceManager.addLocalRecord(activityName, timeString, attendanceStatus);
+                    // Format: "11/22/25-4:37 PM" (date-scheduledTime)
+                    const dateTimeFormatted = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear().toString().slice(-2)}-${scheduledTime}`;
                     
-                    this.updateAttendanceStats();
-                    this.populateAttendanceTable();
-                    this.updateScanButtonState();
+                    this.attendanceManager.addLocalRecord(activityName, timeString, attendanceStatus, dateTimeFormatted, scheduledTime);
+                    
+                    // REFRESH DATA FROM DATABASE
+                    setTimeout(() => {
+                        this.attendanceManager.loadAttendanceRecords(true).then(() => {
+                            this.updateAttendanceStats();
+                            this.populateAttendanceTable();
+                            this.updateScanButtonState();
+                        });
+                    }, 1000);
                 } else {
                     $('#scanResult').removeClass('status-success')
                                   .addClass('status-error')
@@ -506,15 +662,15 @@ class UIManager {
         const [time, modifier] = time12h.split(' ');
         let [hours, minutes] = time.split(':');
         
-        if (hours === '12') {
-            hours = '00';
+        hours = parseInt(hours, 10);
+        
+        if (hours === 12) {
+            hours = modifier === 'AM' ? 0 : 12;
+        } else if (modifier === 'PM') {
+            hours += 12;
         }
         
-        if (modifier === 'PM') {
-            hours = parseInt(hours, 10) + 12;
-        }
-        
-        return `${hours}:${minutes}:00`;
+        return `${String(hours).padStart(2, '0')}:${minutes}:00`;
     }
 
     completeScanProcess() {
@@ -534,7 +690,7 @@ class UIManager {
     }
 
     parseQRCode(qrText) {
-        console.log('Original QR Code content:', qrText);
+        console.log('🔍 Parsing QR Code:', qrText);
 
         if (qrText.includes('SIBONGA')) {
             const parts = qrText.split('-');
@@ -543,8 +699,8 @@ class UIManager {
                 const activityName = parts.slice(1, -1).join('-');
                 const scheduledTime = parts[parts.length - 1];
                 
-                console.log('Extracted Activity:', activityName);
-                console.log('Scheduled Time:', scheduledTime);
+                console.log('✅ Extracted Activity:', activityName);
+                console.log('✅ Scheduled Time:', scheduledTime);
                 
                 return {
                     activityName: activityName,
@@ -556,8 +712,23 @@ class UIManager {
         return null;
     }
 
+    // EXPORT TO CSV (Changed from PDF)
+    exportToCSV() {
+        const currentFilter = this.attendanceManager.getCurrentFilter();
+        let url = '../../sql_php/export_attendance_pdf.php?type=filtered';
+        
+        if (currentFilter) {
+            url += '&filter=' + encodeURIComponent(currentFilter);
+        }
+        
+        console.log('📥 Exporting to CSV with filter:', currentFilter);
+        window.location.href = url;
+    }
+
     updateAttendanceStats() {
         const stats = this.attendanceManager.getStats();
+        
+        console.log('📊 Updating stats:', stats);
         
         $('#totalEvents').text(stats.total);
         $('#presentCount').text(stats.present);
@@ -572,27 +743,53 @@ class UIManager {
 
         const data = this.attendanceManager.getAttendanceData();
         
+        console.log('📋 Populating table with records:', data.length);
+        
         if (data.length === 0) {
-            tbody.append('<tr><td colspan="6" style="text-align: center;">No attendance records yet</td></tr>');
+            tbody.append('<tr><td colspan="6" style="text-align: center;">No attendance records found</td></tr>');
             return;
         }
 
+        // REMARKS: Show DB value with badge styling
+        const remarksBadgeConfig = {
+            'present': 'status-present',
+            'late': 'status-late',
+            'absent': 'status-absent',
+            'pending': 'status-pending'
+        };
+
+        // STATUS TEXT CUSTOMIZATION - Based on remarks from DB
+        const statusTextConfig = {
+            'present': 'Completed Attendance',
+            'late': 'Arrive 30+ minutes after the scheduled time',
+            'absent': 'Failed to Attend',
+            'pending': 'Active - Time out required'
+        };
+
         data.forEach(record => {
-            const statusClass = `status-${record.status}`;
-            const statusText = record.status.charAt(0).toUpperCase() + record.status.slice(1);
+            // Get badge class for remarks
+            const remarksBadgeClass = remarksBadgeConfig[record.status] || 'status-present';
+            
+            // Get custom status text based on database remarks
+            const statusText = statusTextConfig[record.status] || record.remarks;
             
             const timeOutDisplay = record.timeOut === 'Pending' 
-                ? '<strong style="color: #ffc107;">⏱️ Pending</strong>' 
+                ? '<strong style="color: #ffc107;">⏳ Pending</strong>' 
                 : record.timeOut;
             
+            // Format Date and Time Started column to show scheduledTime
+            const dateTimeDisplay = record.scheduledTime && record.scheduledTime !== 'N/A'
+                ? `${record.dateTime.split('-')[0]}-<strong style="color: #007bff;">${record.scheduledTime}</strong>`
+                : record.dateTime;
+            
             const row = `
-                <tr ${record.timeOut === 'Pending' ? 'style="background-color: #fff3cd;"' : ''}>
-                    <td>${record.date}</td>
+                <tr ${record.isActive ? 'style="background-color: #fff3cd;"' : ''}>
+                    <td>${dateTimeDisplay}</td>
                     <td>${record.activity}</td>
-                    <td>${record.timeIn}</td>
+                    <td>${record.timeIn || 'N/A'}</td>
                     <td>${timeOutDisplay}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${record.remarks}</td>
+                    <td><span class="status-badge ${remarksBadgeClass}">${record.remarks}</span></td>
+                    <td>${statusText}</td>
                 </tr>
             `;
             tbody.append(row);
@@ -627,6 +824,7 @@ function getStudent() {
         url: '../../sql_php/user_data.php',
         type: 'GET',
         dataType: 'json',
+        cache: false,
         success: function(response) {
             if (response.success) {
                 const student = response.student;
@@ -637,16 +835,16 @@ function getStudent() {
                 $('.user-course').text('Course: ' + student.course);
                 $('.user-sex').text('Sex: ' + student.sex);
                 
-                console.log('Student loaded:', response.student);
+                console.log('✅ Student loaded:', response.student);
                 return response.student;
             } else {
-                console.error('Error:', response.error);
+                console.error('❌ Error:', response.error);
                 $('.user-name').text('Error loading student');
                 $('.user-id').eq(0).text('Error: ' + response.error);
             }
         },
         error: function(xhr, status, error) {
-            console.error('AJAX Error:', error);
+            console.error('❌ AJAX Error:', error);
             $('.user-name').text('Connection Error');
             $('.user-id').eq(0).text('Failed to connect to server');
         }
@@ -654,7 +852,8 @@ function getStudent() {
 }
 
 $(document).ready(function() {
+    console.log('🎯 Initializing Student Dashboard...');
     const uiManager = new UIManager();
-    console.log('Student Dashboard initialized successfully');
+    console.log('✅ Student Dashboard initialized successfully');
     getStudent();
 });

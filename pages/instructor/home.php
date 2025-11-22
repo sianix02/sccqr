@@ -31,10 +31,7 @@ $user_id = $_SESSION['session_id'];
     
     <div class="mobile-overlay" id="mobile-overlay"></div>
     
-    <div class="connection-status" id="connection-status">
-        <div class="live-dot"></div>
-        <span id="status-text">Online</span>
-    </div>
+
     
     <?php include 'components/sidebar.php'; ?>
 

@@ -513,3 +513,24 @@
         padding: 8px 10px;
     }
 }
+
+/* Current solid colors: */
+.status-badge.status-present {
+    background-color: #00ff3c;  /* ← Change this */
+    color: var(--white);
+}
+
+.status-badge.status-late {
+    background-color: #ffc107;  /* ← Change this */
+    color: var(--white);
+}
+
+.status-badge.status-absent {
+    background-color: #ff0019;  /* ← Change this */
+    color: var(--white);
+}
+
+.status-badge.status-pending {
+    background-color: #007bff;  /* ← Change this */
+    color: var(--white);
+}

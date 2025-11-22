@@ -58,7 +58,6 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     <main class="main-content">
         <?php include 'home.php'; ?>
         <?php include 'start-event.php'; ?>
-        <?php include 'event.php'; ?>
         <?php include 'student.php'; ?>
         <?php include 'create-acc.php'; ?>
         <?php include 'logout.php'; ?>

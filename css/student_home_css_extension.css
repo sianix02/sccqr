@@ -1,0 +1,228 @@
+/* Extension styles for filter and export functionality */
+
+/* Filter Dropdown Styles */
+.filter-select {
+    padding: 10px 15px;
+    border: 2px solid var(--primary-blue);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.filter-select:hover {
+    border-color: var(--dark-blue);
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--dark-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.filter-select option {
+    padding: 8px 12px;
+    background-color: var(--white);
+    color: var(--text-dark);
+}
+
+.filter-select option:hover {
+    background-color: var(--hover-blue);
+}
+
+/* Export Button Styles */
+#exportPdfBtn {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.2);
+    white-space: nowrap;
+}
+
+#exportPdfBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 102, 204, 0.3);
+}
+
+#exportPdfBtn:active {
+    transform: translateY(0);
+}
+
+/* Filter and Export Container */
+.filter-export-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--light-blue-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+/* Responsive Design for Filter and Export */
+@media (max-width: 768px) {
+    .filter-export-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .filter-select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    #exportPdfBtn {
+        width: 100%;
+        margin-left: 0 !important;
+    }
+
+    .filter-group {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-export-container {
+        padding: 10px;
+    }
+
+    .filter-select,
+    #exportPdfBtn {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+}
+
+/* Status Badge Enhancements */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-present {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-absent {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-late {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-pending {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Table Row Hover Enhancement */
+.attendance-table tbody tr:hover {
+    background-color: var(--hover-blue) !important;
+    transition: background-color 0.2s ease;
+}
+
+.attendance-table tbody tr.active-session {
+    background-color: #fff3cd !important;
+}
+
+/* Loading and Empty State Styles */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.empty-state-text {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Button Group Styles */
+.btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-group .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+/* Print Styles for PDF */
+@media print {
+    .header,
+    .user-actions,
+    #timeInBtn,
+    #timeOutBtn,
+    #stopScanBtn,
+    #exportPdfBtn,
+    .filter-export-container,
+    .qr-scanner-container {
+        display: none !important;
+    }
+
+    .card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .attendance-table {
+        page-break-inside: avoid;
+    }
+
+    body {
+        background-color: white;
+    }
+}

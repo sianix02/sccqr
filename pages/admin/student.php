@@ -57,10 +57,10 @@
         <div class="table-container">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
-                    <tr style="background-color: var(--light-blue-bg);">
+                    <!-- <tr style="background-color: var(--light-blue-bg);">
                         <th style="padding: 12px; text-align: center; color: var(--dark-blue); width: 50px;">
                             <input type="checkbox" id="select-all-students" style="cursor: pointer; width: 18px; height: 18px;">
-                        </th>
+                        </th> -->
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Student ID</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Name</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Set</th>

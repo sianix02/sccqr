@@ -327,12 +327,6 @@ class InstructorDashboard {
                 <td>${entry.event}</td>
                 <td>${timeIn}</td>
                 <td>${timeOut}</td>
-                <td>
-                    <button onclick="dashboard.viewStudentDetails('${entry.studentId}')" 
-                        class="btn-view-details">
-                        View
-                    </button>
-                </td>
             `;
             
             tbody.appendChild(row);
@@ -583,7 +577,6 @@ class InstructorDashboard {
         const totalCheckins = studentData.length;
         const latestCheckin = studentData[0]?.time || 'N/A';
         
-        alert(`Student Details for ${studentId}:\n\nName: ${student.name}\nCourse: ${student.course}\nTotal Check-ins: ${totalCheckins}\nLatest: ${latestCheckin}`);
     }
 
     startAutoRefresh() {

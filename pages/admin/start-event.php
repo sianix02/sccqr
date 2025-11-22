@@ -35,11 +35,6 @@
                 <textarea id="event-description" rows="4" placeholder="Describe the event" required></textarea>
             </div>
             
-            <div class="form-group">
-                <label for="max-participants">Maximum Participants</label>
-                <input type="number" id="max-participants" placeholder="Enter maximum number of participants">
-            </div>
-            
             <button type="submit" class="btn">Generate Event QR Code</button>
         </form>
     </div>
@@ -58,8 +53,6 @@
 
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
                 <button class="btn" id="download-qr">Download QR Code</button>
-                <button class="btn btn-secondary" id="copy-qr-code">Copy QR Code</button>
-                <button class="btn" id="view-event-page" style="background-color: #28a745;">View Event Page</button>
                 <button class="btn btn-secondary" id="create-new-event">Create New Event</button>
             </div>
         </div>

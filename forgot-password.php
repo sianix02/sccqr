@@ -35,7 +35,7 @@ if(isset($_POST['verify_username'])){
         }
         $check_stmt->close();
     } else {
-        $notice = "Username not found";
+        $notice = "ID not found";
     }
     $stmt->close();
 }

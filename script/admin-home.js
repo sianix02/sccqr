@@ -1,11 +1,6 @@
 // ============================================================
-// COMPLETE ADMIN-HOME.JS FILE - WITH PDF EXPORT (Legal Size)
-// Replace the entire admin-home.js file with this code
+// COMPLETE ADMIN-HOME.JS FILE - UPDATED VERSION
 // ============================================================
-
-// Add these libraries to your HTML file:
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 // ============================================================
 // GLOBAL UTILITIES
@@ -61,7 +56,7 @@ function addPDFHeader(doc) {
     doc.text('QR CODE ATTENDANCE MONITORING SYSTEM', 4.25, 1.55, { align: 'center' });
 }
 
-// Export to PDF (replaces exportToCSV)
+// Export to PDF
 function exportToPDF(data, filename, title = 'Report') {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
@@ -451,39 +446,68 @@ function hexToRgba(hex, alpha) {
 // ============================================================
 
 let currentEventData = null;
-let currentSessionActive = false;
-let attendanceData = [];
 
 function initializeEventManagement() {
     document.getElementById('event-form')?.addEventListener('submit', handleEventSubmit);
     document.getElementById('download-qr')?.addEventListener('click', downloadQRCode);
-    document.getElementById('copy-qr-code')?.addEventListener('click', copyQRCode);
-    document.getElementById('view-event-page')?.addEventListener('click', viewEventPage);
     document.getElementById('create-new-event')?.addEventListener('click', createNewEvent);
-    document.getElementById('back-to-events')?.addEventListener('click', backToEvents);
-    document.getElementById('export-attendance')?.addEventListener('click', exportAttendance);
 }
 
-function handleEventSubmit(e) {
+async function handleEventSubmit(e) {
     e.preventDefault();
     
+    const eventName = document.getElementById('event-name').value;
+    const eventDate = document.getElementById('event-date').value;
+    const eventType = document.getElementById('event-type').value;
+    const eventDescription = document.getElementById('event-description').value;
+    
+    // Generate QR code data
+    const qrCodeData = `SIBONGA-${eventName.trim().toUpperCase()}-${new Date(eventDate).toLocaleTimeString()}`;
+    
     currentEventData = {
-        id: generateEventId(),
-        name: document.getElementById('event-name').value,
-        date: document.getElementById('event-date').value,
-        type: document.getElementById('event-type').value,
-        description: document.getElementById('event-description').value,
-        maxParticipants: document.getElementById('max-participants').value,
+        name: eventName,
+        date: eventDate,
+        type: eventType,
+        description: eventDescription,
+        qrCodeData: qrCodeData,
         createdAt: new Date().toISOString()
     };
 
-    generateQRCode(currentEventData);
-    initializeAttendanceSession();
-    
-    document.getElementById('qr-section').style.display = 'block';
-    document.getElementById('event-form').style.display = 'none';
-    
-    showToast('Event created successfully!', 'success');
+    // Save event to database first
+    try {
+        const response = await fetch('../../api/save_event.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                event_name: eventName,
+                event_date: eventDate,
+                event_type: eventType,
+                event_description: eventDescription,
+                qr_code_data: qrCodeData
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            currentEventData.id = result.event_id;
+            
+            // Generate and display QR code
+            generateQRCode(currentEventData);
+            
+            document.getElementById('qr-section').style.display = 'block';
+            document.getElementById('event-form').style.display = 'none';
+            
+            showToast('Event created and saved successfully!', 'success');
+        } else {
+            throw new Error(result.error || 'Failed to save event');
+        }
+    } catch (error) {
+        console.error('Error saving event:', error);
+        showToast('Error: ' + error.message, 'error');
+    }
 }
 
 function generateQRCode(eventData) {
@@ -492,7 +516,7 @@ function generateQRCode(eventData) {
     
     qrContainer.innerHTML = '';
     
-    const qrCodeData = `SIBONGA-${eventData.name.trim().toUpperCase()}-${new Date(eventData.date).toLocaleTimeString()}`;
+    const qrCodeData = eventData.qrCodeData;
     
     if (typeof QRCode === 'undefined') {
         qrContainer.innerHTML = '<p style="color: red;">QR Code library missing</p>';
@@ -525,33 +549,12 @@ function generateQRCode(eventData) {
         eventInfoDiv.innerHTML = `
             <strong>Event Details:</strong><br>
             <strong>Type:</strong> ${eventData.type}<br>
-            <strong>Date:</strong> ${new Date(eventData.date).toLocaleString()}<br>
-            <strong>Max Participants:</strong> ${eventData.maxParticipants || 'Unlimited'}
+            <strong>Date:</strong> ${new Date(eventData.date).toLocaleString()}
         `;
         qrTextElement.parentNode.insertBefore(eventInfoDiv, qrTextElement.nextSibling);
         
         showToast('QR Code generated successfully!', 'success');
     });
-}
-
-function initializeAttendanceSession() {
-    currentSessionActive = true;
-    attendanceData = [];
-    updateAttendanceStats(0, 0);
-    
-    if (currentEventData) {
-        currentEventData.sessionActive = true;
-        currentEventData.attendanceData = attendanceData;
-    }
-}
-
-function updateAttendanceStats(registered, present) {
-    const el = (id) => document.getElementById(id);
-    if (el('total-registered')) el('total-registered').textContent = registered;
-    if (el('total-present')) el('total-present').textContent = present;
-    
-    const rate = registered > 0 ? Math.round((present / registered) * 100) : 0;
-    if (el('attendance-rate')) el('attendance-rate').textContent = rate + '%';
 }
 
 function downloadQRCode() {
@@ -568,33 +571,6 @@ function downloadQRCode() {
     }
 }
 
-function copyQRCode() {
-    const qrText = document.getElementById('qr-code-text').textContent;
-    navigator.clipboard.writeText(qrText)
-        .then(() => showToast('Event name copied to clipboard!', 'success'))
-        .catch(() => {
-            const textArea = document.createElement('textarea');
-            textArea.value = qrText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('Event name copied to clipboard!', 'success');
-            } catch {
-                showToast('Failed to copy event name', 'error');
-            }
-            document.body.removeChild(textArea);
-        });
-}
-
-function viewEventPage() {
-    if (currentEventData) {
-        showEventAttendancePage(currentEventData);
-    } else {
-        showToast('No event data available', 'error');
-    }
-}
-
 function createNewEvent() {
     document.getElementById('event-form').reset();
     document.getElementById('event-form').style.display = 'block';
@@ -603,166 +579,9 @@ function createNewEvent() {
     document.getElementById('qr-code-container').innerHTML = '';
     document.getElementById('qr-code-text').textContent = '';
     
-    const attendanceList = document.getElementById('attendance-list');
-    attendanceList.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Waiting for students to scan QR code...</td></tr>';
-    
-    updateAttendanceStats(0, 0);
-    document.getElementById('event-info').innerHTML = '';
-    
     currentEventData = null;
-    currentSessionActive = false;
-    attendanceData = [];
-    
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.classList.remove('active'));
-    document.getElementById('start-event').classList.add('active');
     
     showToast('Ready to create a new event', 'success');
-}
-
-function showEventAttendancePage(eventData) {
-    document.getElementById('attendance-event-title').textContent = eventData.name;
-    document.getElementById('attendance-event-subtitle').textContent = `Track attendance for ${eventData.type} event`;
-    
-    document.getElementById('event-info').innerHTML = `
-        <strong>Date:</strong> ${new Date(eventData.date).toLocaleString()}<br>
-        <strong>Type:</strong> ${eventData.type}<br>
-        <strong>Max Participants:</strong> ${eventData.maxParticipants || 'Unlimited'}<br>
-        <strong>Event ID:</strong> ${eventData.id}
-    `;
-
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.classList.remove('active'));
-    document.getElementById('event-attendance').classList.add('active');
-
-    updateAttendanceStats(0, 0);
-}
-
-function backToEvents() {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.classList.remove('active'));
-    document.getElementById('start-event').classList.add('active');
-}
-
-// Export Attendance to PDF
-function exportAttendance() {
-    if (currentEventData) {
-        const data = gatherAttendanceData();
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'in',
-            format: [8.5, 13]
-        });
-
-        addPDFHeader(doc);
-
-        doc.setFontSize(16);
-        doc.setFont(undefined, 'bold');
-        doc.text('Event Attendance Report', 4.25, 2.3, { align: 'center' });
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text('Event Information:', 0.5, 2.7);
-        
-        doc.setFont(undefined, 'normal');
-        doc.text(`Event Name: ${currentEventData.name}`, 0.5, 2.85);
-        doc.text(`Event Type: ${currentEventData.type}`, 0.5, 3.0);
-        doc.text(`Date: ${new Date(currentEventData.date).toLocaleString()}`, 0.5, 3.15);
-        doc.text(`Session ID: ${currentEventData.id}`, 0.5, 3.3);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 0.5, 3.45);
-
-        // Prepare table data (skip header rows from data)
-        const tableData = data.slice(7).slice(1); // Skip metadata and header row
-
-        if (tableData.length > 0) {
-            doc.autoTable({
-                startY: 3.7,
-                head: [['Time', 'Student ID', 'Name', 'Event Name', 'Status']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [0, 102, 204],
-                    textColor: 255,
-                    fontStyle: 'bold',
-                    halign: 'center',
-                    fontSize: 9
-                },
-                bodyStyles: {
-                    fontSize: 8,
-                    cellPadding: 0.08
-                },
-                columnStyles: {
-                    0: { cellWidth: 1.2 },
-                    1: { cellWidth: 1.0 },
-                    2: { cellWidth: 2.0 },
-                    3: { cellWidth: 2.0 },
-                    4: { cellWidth: 1.3, halign: 'center' }
-                },
-                alternateRowStyles: {
-                    fillColor: [248, 249, 250]
-                },
-                didParseCell: function(data) {
-                    if (data.section === 'body' && data.column.index === 4) {
-                        data.cell.styles.textColor = [21, 87, 36];
-                        data.cell.styles.fillColor = [212, 237, 218];
-                    }
-                },
-                margin: { left: 0.5, right: 0.5 }
-            });
-        } else {
-            doc.setFontSize(10);
-            doc.text('No attendance records yet.', 4.25, 4.5, { align: 'center' });
-        }
-
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.text(`Page ${i} of ${pageCount}`, 4.25, 12.7, { align: 'center' });
-            doc.text(`Sibonga Community College - Attendance System`, 4.25, 12.85, { align: 'center' });
-        }
-
-        const filename = `${currentEventData.name.replace(/\s+/g, '-')}-Attendance.pdf`;
-        doc.save(filename);
-        
-        showToast('Attendance data exported successfully!', 'success');
-    } else {
-        showToast('No event data to export', 'error');
-    }
-}
-
-function gatherAttendanceData() {
-    if (!currentEventData || !attendanceData.length) {
-        return [['Time', 'Student ID', 'Name', 'Event Name', 'Status']];
-    }
-
-    const data = [
-        ['Event Name:', currentEventData.name],
-        ['Event Type:', currentEventData.type],
-        ['Event Date:', new Date(currentEventData.date).toLocaleString()],
-        ['Session ID:', currentEventData.id],
-        ['QR Code Content:', currentEventData.name],
-        [''],
-        ['Time', 'Student ID', 'Name', 'Event Name', 'Status']
-    ];
-    
-    attendanceData.forEach((record, index) => {
-        data.push([
-            record.time,
-            `STU-${String(index + 1).padStart(3, '0')}`,
-            record.name,
-            record.scannedEvent || currentEventData.name,
-            'Present'
-        ]);
-    });
-    
-    return data;
-}
-
-function generateEventId() {
-    return `EVT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
 
 // ============================================================
@@ -852,14 +671,9 @@ function renderStudentsTable(filteredData = null) {
         const totalEvents = getTotalEvents();
         const attendanceRate = totalEvents > 0 ? Math.round((attendanceCount / totalEvents) * 100) : (attendanceCount > 0 ? 100 : 0);
         const statusColor = student.status === 'Active' ? '#28a745' : '#dc3545';
-        const isChecked = selectedStudents.has(student.id);
         
         return `
             <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
-                    <input type="checkbox" class="student-checkbox" data-student-id="${student.id}" 
-                           ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
-                </td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.id}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.name}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.email}</td>
@@ -881,62 +695,11 @@ function renderStudentsTable(filteredData = null) {
                     <div style="display: flex; gap: 5px; justify-content: center;">
                         <button class="btn" style="font-size: 11px; padding: 6px 10px;" onclick="viewStudentDetails('${student.id}')">View</button>
                         <button class="btn" style="font-size: 11px; padding: 6px 10px; background: #ffc107;" onclick="editStudent('${student.id}')">Edit</button>
-                        <button class="btn btn-danger" style="font-size: 11px; padding: 6px 10px;" onclick="confirmDeleteStudent('${student.id}')">Delete</button>
                     </div>
                 </td>
             </tr>
         `;
     }).join('');
-    
-    attachCheckboxListeners();
-}
-
-function attachCheckboxListeners() {
-    const selectAllCheckbox = document.getElementById('select-all-students');
-    const checkboxes = document.querySelectorAll('.student-checkbox');
-    
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            checkboxes.forEach(cb => {
-                cb.checked = isChecked;
-                const studentId = cb.getAttribute('data-student-id');
-                if (isChecked) {
-                    selectedStudents.add(studentId);
-                } else {
-                    selectedStudents.delete(studentId);
-                }
-            });
-            updateBulkDeleteButton();
-        });
-    }
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const studentId = this.getAttribute('data-student-id');
-            if (this.checked) {
-                selectedStudents.add(studentId);
-            } else {
-                selectedStudents.delete(studentId);
-                if (selectAllCheckbox) selectAllCheckbox.checked = false;
-            }
-            updateBulkDeleteButton();
-        });
-    });
-}
-
-function updateBulkDeleteButton() {
-    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-    const selectedCount = document.getElementById('selected-count');
-    
-    if (bulkDeleteBtn && selectedCount) {
-        if (selectedStudents.size > 0) {
-            bulkDeleteBtn.style.display = 'block';
-            selectedCount.textContent = selectedStudents.size;
-        } else {
-            bulkDeleteBtn.style.display = 'none';
-        }
-    }
 }
 
 function updateStudentStats() {
@@ -972,7 +735,6 @@ function attachStudentEventListeners() {
     const searchInput = document.getElementById('student-search');
     const sortSelect = document.getElementById('sort-students');
     const refreshBtn = document.getElementById('refresh-students');
-    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     
     searchInput?.addEventListener('input', (e) => searchStudents(e.target.value));
     sortSelect?.addEventListener('change', (e) => sortStudents(e.target.value));
@@ -982,96 +744,17 @@ function attachStudentEventListeners() {
         showToast('Refreshing student list...', 'success');
     });
     
-    bulkDeleteBtn?.addEventListener('click', confirmBulkDelete);
-    
     document.getElementById('close-modal')?.addEventListener('click', closeStudentModal);
     document.getElementById('cancel-modal')?.addEventListener('click', closeStudentModal);
     document.getElementById('close-details-modal')?.addEventListener('click', closeDetailsModal);
     document.getElementById('close-details-btn')?.addEventListener('click', closeDetailsModal);
-    document.getElementById('cancel-delete')?.addEventListener('click', closeDeleteModal);
-    document.getElementById('cancel-bulk-delete')?.addEventListener('click', closeBulkDeleteModal);
     
     document.getElementById('student-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
         saveStudent();
     });
     
-    document.getElementById('confirm-delete')?.addEventListener('click', deleteStudent);
-    document.getElementById('confirm-bulk-delete')?.addEventListener('click', bulkDeleteStudents);
     document.getElementById('export-student-report')?.addEventListener('click', exportStudentReport);
-}
-
-function confirmBulkDelete() {
-    if (selectedStudents.size === 0) {
-        showToast('No students selected', 'error');
-        return;
-    }
-    
-    document.getElementById('bulk-delete-count').textContent = selectedStudents.size;
-    document.getElementById('bulk-delete-modal').style.display = 'block';
-}
-
-function closeBulkDeleteModal() {
-    document.getElementById('bulk-delete-modal').style.display = 'none';
-}
-
-async function bulkDeleteStudents() {
-    if (selectedStudents.size === 0) return;
-    
-    const confirmBtn = document.getElementById('confirm-bulk-delete');
-    const originalText = confirmBtn.textContent;
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = 'Deleting...';
-    
-    try {
-        let successCount = 0;
-        let failCount = 0;
-        const totalCount = selectedStudents.size;
-        
-        for (const studentId of selectedStudents) {
-            try {
-                const response = await fetch('../../api/delete_student.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_id: studentId })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    successCount++;
-                } else {
-                    failCount++;
-                    console.error(`Failed to delete student ${studentId}:`, result.error);
-                }
-            } catch (error) {
-                failCount++;
-                console.error(`Error deleting student ${studentId}:`, error);
-            }
-        }
-        
-        selectedStudents.clear();
-        closeBulkDeleteModal();
-        
-        if (successCount > 0) {
-            showToast(`Successfully deleted ${successCount} of ${totalCount} students`, 'success');
-        }
-        if (failCount > 0) {
-            showToast(`Failed to delete ${failCount} students`, 'error');
-        }
-        
-        await loadStudentsFromDatabase();
-        updateBulkDeleteButton();
-        
-        const selectAllCheckbox = document.getElementById('select-all-students');
-        if (selectAllCheckbox) selectAllCheckbox.checked = false;
-        
-    } catch (error) {
-        showToast('Error during bulk delete: ' + error.message, 'error');
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = originalText;
-    }
 }
 
 function openStudentModal(student = null) {
@@ -1170,59 +853,6 @@ window.editStudent = function(studentId) {
     if (student) openStudentModal(student);
 }
 
-window.confirmDeleteStudent = function(studentId) {
-    const student = studentsData.find(s => s.id === studentId);
-    if (student) {
-        studentToDelete = student;
-        document.getElementById('delete-student-name').textContent = `${student.name} (${student.id})`;
-        document.getElementById('delete-modal').style.display = 'block';
-    }
-}
-
-async function deleteStudent() {
-    if (!studentToDelete) return;
-    
-    try {
-        const deleteBtn = document.getElementById('confirm-delete');
-        const originalText = deleteBtn.textContent;
-        deleteBtn.disabled = true;
-        deleteBtn.textContent = 'Deleting...';
-        
-        const response = await fetch('../../api/delete_student.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ student_id: studentToDelete.id })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showToast(`${result.message} (${result.deleted_attendance_records} attendance records removed)`, 'success');
-            closeDeleteModal();
-            await loadStudentsFromDatabase();
-        } else {
-            throw new Error(result.error || 'Failed to delete student');
-        }
-        
-        deleteBtn.disabled = false;
-        deleteBtn.textContent = originalText;
-        
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-        const deleteBtn = document.getElementById('confirm-delete');
-        if (deleteBtn) {
-            deleteBtn.disabled = false;
-            deleteBtn.textContent = 'Delete';
-        }
-    }
-}
-
-function closeDeleteModal() {
-    const modal = document.getElementById('delete-modal');
-    if (modal) modal.style.display = 'none';
-    studentToDelete = null;
-}
-
 window.viewStudentDetails = function(studentId) {
     const student = studentsData.find(s => s.id === studentId);
     if (!student) return;
@@ -1282,7 +912,6 @@ function closeDetailsModal() {
     window.currentViewingStudent = null;
 }
 
-// Export Student Report to PDF
 function exportStudentReport() {
     if (!window.currentViewingStudent) return;
     
@@ -1453,17 +1082,41 @@ function sortStudents(sortType) {
 // ============================================================
 
 function initializeLogout() {
-    document.querySelector('#logout .btn-danger')?.addEventListener('click', function() {
-        window.location.href = "../../sql_php/log_out.php";
-    });
+    const logoutBtn = document.querySelector('#logout .btn-danger');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            console.log('Logout button clicked');
+            
+            this.textContent = 'Logging out...';
+            this.disabled = true;
+            
+            const logoutPath = "../../sql_php/log_out.php";
+            
+            console.log('Redirecting to:', logoutPath);
+            console.log('Current URL:', window.location.href);
+            
+            window.location.href = logoutPath;
+        });
+    } else {
+        console.error('Logout button not found!');
+    }
 
-    document.querySelector('#logout .btn-secondary')?.addEventListener('click', function() {
-        const navButtons = document.querySelectorAll('.nav-button');
-        const pages = document.querySelectorAll('.page');
-        
-        navButtons.forEach(btn => btn.classList.remove('active'));
-        navButtons[0].classList.add('active');
-        pages.forEach(page => page.classList.remove('active'));
-        document.getElementById('home').classList.add('active');
-    });
+    const cancelBtn = document.querySelector('#logout .btn-secondary');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            console.log('Cancel button clicked - returning to home');
+            
+            const navButtons = document.querySelectorAll('.nav-button');
+            const pages = document.querySelectorAll('.page');
+            
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            if (navButtons[0]) navButtons[0].classList.add('active');
+            
+            pages.forEach(page => page.classList.remove('active'));
+            const homePage = document.getElementById('home');
+            if (homePage) homePage.classList.add('active');
+        });
+    } else {
+        console.error('Cancel button not found!');
+    }
 }
