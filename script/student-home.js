@@ -761,7 +761,7 @@ class UIManager {
         // STATUS TEXT CUSTOMIZATION - Based on remarks from DB
         const statusTextConfig = {
             'present': 'Completed Attendance',
-            'late': 'Arrive 30+ minutes after the scheduled time',
+            'late': 'Arrive 30+ minutes late',
             'absent': 'Failed to Attend',
             'pending': 'Active - Time out required'
         };

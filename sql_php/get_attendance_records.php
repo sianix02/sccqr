@@ -190,9 +190,9 @@ try {
     $stats_query = "
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN time_out IS NOT NULL AND remarks = 'present' THEN 1 ELSE 0 END) as present,
-            SUM(CASE WHEN time_out IS NOT NULL AND remarks = 'late' THEN 1 ELSE 0 END) as late,
-            SUM(CASE WHEN remarks = 'absent' OR (time_in IS NULL AND time_out IS NULL) THEN 1 ELSE 0 END) as absent,
+            SUM(CASE WHEN remarks = 'present' THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN remarks = 'late' THEN 1 ELSE 0 END) as late,
+            SUM(CASE WHEN remarks = 'absent' OR (time_in = '00:00:00' AND time_out = '00:00:00') THEN 1 ELSE 0 END) as absent,
             SUM(CASE WHEN time_out IS NULL AND time_in IS NOT NULL THEN 1 ELSE 0 END) as pending
         FROM attendance_report
         WHERE student_id = ?

@@ -15,13 +15,12 @@ if (!file_exists('connection.php')) {
 
 require_once 'connection.php';
 
-// Define base paths - UPDATED FOR YOUR LARAGON SETUP
-define('BASE_PATH', dirname(__DIR__)); // C:\laragon\www\sccqr
+// Define base paths
+define('BASE_PATH', dirname(__DIR__));
 define('FPDF_PATH', BASE_PATH . '/vendor/fpdf/fpdf.php');
 define('LOGO1_PATH', BASE_PATH . '/images/Sibonga.jpg');
 define('LOGO2_PATH', BASE_PATH . '/images/logo.jpg');
 
-// Check if FPDF is installed
 if (!file_exists(FPDF_PATH)) {
     die('FPDF library not found at: ' . FPDF_PATH);
 }
@@ -103,6 +102,14 @@ try {
     $late_count = 0;
     $absent_count = 0;
     
+    // Map for status descriptions
+    $status_descriptions = [
+        'present' => 'Completed Attendance',
+        'late' => 'Arrive 30+ minutes late',
+        'absent' => 'Failed to Attend',
+        'pending' => 'Active - Time out required'
+    ];
+    
     foreach ($records as $record) {
         $event_name = $record['event_name'];
         $description = $record['description'] ?? 'N/A';
@@ -113,7 +120,7 @@ try {
         
         // Format times
         $time_in = 'N/A';
-        if ($record['time_in']) {
+        if ($record['time_in'] && $record['time_in'] !== '00:00:00') {
             $time_in_obj = DateTime::createFromFormat('H:i:s', $record['time_in']);
             if ($time_in_obj) {
                 $time_in = $time_in_obj->format('g:i A');
@@ -123,22 +130,35 @@ try {
         $time_out = 'N/A';
         $status = 'PENDING';
         $remarks = 'Pending';
+        $status_description = $status_descriptions['pending'];
         
-        if ($record['time_out']) {
+        // CHECK IF ABSENT: time_in = '00:00:00' AND time_out = '00:00:00'
+        if ($record['time_in'] === '00:00:00' && $record['time_out'] === '00:00:00') {
+            $status = 'ABSENT';
+            $remarks = 'Absent';
+            $status_description = $status_descriptions['absent'];
+            $absent_count++;
+        }
+        // CHECK IF HAS TIME OUT (actual time out, not 00:00:00)
+        elseif ($record['time_out'] && $record['time_out'] !== '00:00:00') {
             $time_out_obj = DateTime::createFromFormat('H:i:s', $record['time_out']);
             if ($time_out_obj) {
                 $time_out = $time_out_obj->format('g:i A');
             }
             $status = strtoupper($record['remarks'] ?? 'PRESENT');
             $remarks = ucfirst($record['remarks'] ?? 'present');
+            $status_description = $status_descriptions[strtolower($remarks)] ?? $status_descriptions['present'];
             
             if ($status === 'PRESENT') $present_count++;
             if ($status === 'LATE') $late_count++;
-        } else {
+        }
+        // PENDING: Has time_in but no time_out
+        else {
             $event_date = new DateTime($record['event_date']);
             if ($event_date->format('Y-m-d') < $now->format('Y-m-d')) {
                 $status = 'ABSENT';
-                $remarks = 'Absent - No Time Out';
+                $remarks = 'Absent';
+                $status_description = $status_descriptions['absent'];
                 $absent_count++;
             }
         }
@@ -150,7 +170,8 @@ try {
             'time_in' => $time_in,
             'time_out' => $time_out,
             'status' => $status,
-            'remarks' => $remarks
+            'remarks' => $remarks,
+            'status_description' => $status_description
         ];
     }
 
@@ -161,27 +182,23 @@ try {
 
     // ===== CREATE PDF USING FPDF =====
     class PDF extends FPDF {
-        private $schoolName = 'UNIVERSITY OF SIBONGA, CEBU, PHILIPPINES';
+        private $schoolName = 'Sibonga Community College';
         private $reportTitle = 'EXTRACURRICULAR ACTIVITIES ATTENDANCE REPORT';
-        private $subtitle = 'SCC - Student Community Center';
+        private $subtitle = 'Poblacion, Sibonga, Cebu 6020';
         
         // Function to convert interlaced PNG to non-interlaced
         private function convertInterlacedPNG($imagePath) {
-            // Check if GD library is available
             if (!extension_loaded('gd')) {
-                return $imagePath; // Return original if GD not available
+                return $imagePath;
             }
             
-            // Try to load the image
             $img = @imagecreatefrompng($imagePath);
             if (!$img) {
-                return $imagePath; // Return original if can't load
+                return $imagePath;
             }
             
-            // Create a temporary file
             $tempPath = sys_get_temp_dir() . '/logo_temp_' . uniqid() . '.png';
             
-            // Save as non-interlaced PNG
             imagesavealpha($img, true);
             imagepng($img, $tempPath, 9, PNG_NO_FILTER);
             imagedestroy($img);
@@ -190,11 +207,9 @@ try {
         }
         
         function Header() {
-            // Use the defined constants for logo paths
             $logo1 = LOGO1_PATH;
             $logo2 = LOGO2_PATH;
             
-            // Add logos if they exist - with error handling for interlaced PNGs
             if (file_exists($logo1)) {
                 try {
                     $this->Image($logo1, 10, 10, 25);
@@ -207,11 +222,9 @@ try {
             
             if (file_exists($logo2)) {
                 try {
-                    // Convert interlaced PNG if needed
                     $converted_logo = $this->convertInterlacedPNG($logo2);
                     $this->Image($converted_logo, 175, 10, 25);
                     
-                    // Clean up temporary file if created
                     if ($converted_logo !== $logo2 && file_exists($converted_logo)) {
                         @unlink($converted_logo);
                     }
@@ -222,24 +235,20 @@ try {
                 error_log('Logo 2 not found at: ' . $logo2);
             }
             
-            // School name - lowered position
             $this->SetFont('Arial', 'B', 14);
-            $this->SetY(18);  // Changed from 12 to 18 (6mm lower)
+            $this->SetY(18);
             $this->Cell(0, 6, $this->schoolName, 0, 1, 'C');
             
-            // Report title
             $this->SetFont('Arial', 'B', 12);
             $this->Cell(0, 6, $this->reportTitle, 0, 1, 'C');
             
-            // Subtitle
             $this->SetFont('Arial', '', 9);
             $this->Cell(0, 5, $this->subtitle, 0, 1, 'C');
             
-            // Line - lowered position
             $this->SetDrawColor(0, 102, 204);
             $this->SetLineWidth(0.5);
-            $this->Line(10, $this->GetY() + 5, 200, $this->GetY() + 5);  // Changed from +2 to +5
-            $this->Ln(8);  // Changed from 5 to 8
+            $this->Line(10, $this->GetY() + 5, 200, $this->GetY() + 5);
+            $this->Ln(8);
         }
         
         function Footer() {
@@ -248,51 +257,62 @@ try {
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
         }
         
-        // Colored table
-        function FancyTable($header, $data, $widths) {
-            // Colors, line width and bold font
+        // Updated table with status badges - REMARKS AND STATUS COLORED
+        function AttendanceTable($header, $data, $widths) {
+            // Header styling
             $this->SetFillColor(0, 102, 204);
             $this->SetTextColor(255);
             $this->SetDrawColor(0, 102, 204);
             $this->SetLineWidth(.3);
             $this->SetFont('', 'B', 9);
             
-            // Header
+            // Header row
             for($i = 0; $i < count($header); $i++) {
                 $this->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
             }
             $this->Ln();
             
-            // Color and font restoration
+            // Data styling
             $this->SetFillColor(224, 235, 255);
             $this->SetTextColor(0);
             $this->SetFont('', '', 8);
             
-            // Data
+            // Data rows
             $fill = false;
             foreach($data as $row) {
-                $this->Cell($widths[0], 6, $row[0], 'LR', 0, 'L', $fill);
+                $this->Cell($widths[0], 8, $row['date'], 'LRB', 0, 'C', $fill);
+                $this->Cell($widths[1], 8, substr($row['event'], 0, 25), 'LRB', 0, 'L', $fill);
+                $this->Cell($widths[2], 8, $row['time_in'], 'LRB', 0, 'C', $fill);
+                $this->Cell($widths[3], 8, $row['time_out'], 'LRB', 0, 'C', $fill);
                 
-                // Wrap long event names
-                $this->Cell($widths[1], 6, substr($row[1], 0, 35), 'LR', 0, 'L', $fill);
-                $this->Cell($widths[2], 6, $row[2], 'LR', 0, 'C', $fill);
-                $this->Cell($widths[3], 6, $row[3], 'LR', 0, 'C', $fill);
-                
-                // Status with color
-                $status = $row[4];
+                // DETERMINE COLOR BASED ON REMARKS
+                $status = strtoupper($row['remarks']);
                 if ($status === 'PRESENT') {
-                    $this->SetTextColor(40, 167, 69); // Green
+                    $bgColor = [40, 167, 69]; // Green RGB
+                    $textColor = 255; // White text
                 } elseif ($status === 'LATE') {
-                    $this->SetTextColor(255, 193, 7); // Yellow
+                    $bgColor = [255, 193, 7]; // Yellow RGB
+                    $textColor = 0; // Black text
                 } elseif ($status === 'ABSENT') {
-                    $this->SetTextColor(220, 53, 69); // Red
+                    $bgColor = [220, 53, 69]; // Red RGB
+                    $textColor = 255; // White text
                 } else {
-                    $this->SetTextColor(108, 117, 125); // Gray
+                    $bgColor = [108, 117, 125]; // Gray RGB
+                    $textColor = 255; // White text
                 }
-                $this->Cell($widths[4], 6, $status, 'LR', 0, 'C', $fill);
-                $this->SetTextColor(0); // Reset to black
                 
-                $this->Cell($widths[5], 6, substr($row[5], 0, 20), 'LR', 0, 'L', $fill);
+                // APPLY COLOR TO REMARKS CELL ONLY
+                $this->SetFillColor($bgColor[0], $bgColor[1], $bgColor[2]);
+                $this->SetTextColor($textColor);
+                $this->SetFont('', 'B', 8);
+                $this->Cell($widths[4], 8, $status, 'LRB', 0, 'C', true);
+                
+                // STATUS CELL - WHITE/NORMAL (NO COLOR)
+                $this->SetFillColor(255, 255, 255); // White background
+                $this->SetTextColor(0); // Black text
+                $this->SetFont('', '', 8);
+                $this->Cell($widths[5], 8, substr($row['status_description'], 0, 30), 'LRB', 0, 'L', true);
+                
                 $this->Ln();
                 $fill = !$fill;
             }
@@ -366,28 +386,26 @@ try {
     
     $pdf->Ln(2);
     
-    // Table headers
-    $header = array('Date', 'Event', 'Time In', 'Time Out', 'Status', 'Remarks');
-    $widths = array(22, 50, 22, 22, 22, 52);
+    // Updated table headers
+    $header = array('Date', 'Event', 'Time In', 'Time Out', 'Remarks', 'Status');
+    $widths = array(22, 40, 22, 22, 30, 54);
     
     // Prepare data
-    $data = array();
+    $data = [];
     if (count($table_rows) === 0) {
-        $data[] = array('', 'No attendance records found', '', '', '', '');
+        $data[] = [
+            'date' => '',
+            'event' => 'No attendance records found',
+            'time_in' => '',
+            'time_out' => '',
+            'remarks' => '',
+            'status_description' => ''
+        ];
     } else {
-        foreach ($table_rows as $row) {
-            $data[] = array(
-                $row['date'],
-                $row['event'],
-                $row['time_in'],
-                $row['time_out'],
-                $row['status'],
-                $row['remarks']
-            );
-        }
+        $data = $table_rows;
     }
     
-    $pdf->FancyTable($header, $data, $widths);
+    $pdf->AttendanceTable($header, $data, $widths);
     
     // Footer note
     $pdf->Ln(5);
@@ -396,7 +414,7 @@ try {
     
     // Output PDF
     $filename = 'Attendance_Report_' . str_replace(' ', '_', $student['first_name'] . '_' . $student['last_name']) . '_' . date('Y-m-d-Hi') . '.pdf';
-    $pdf->Output('D', $filename); // D = Download
+    $pdf->Output('D', $filename);
     exit;
 
 } catch (Exception $e) {
