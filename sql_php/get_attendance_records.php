@@ -29,34 +29,34 @@ try {
     $student_id = (int)$_SESSION['student_id'];
     $limit = isset($_GET['limit']) ? min((int)$_GET['limit'], 100) : 50;
 
-    // ===== AUTO-MARK ABSENT FOR PAST EVENTS =====
-    $mark_absent_query = "
-        INSERT INTO attendance_report (student_id, event_name, date_time, time_in, time_out, remarks)
-        SELECT 
-            ?, 
-            e.event_name,
-            e.event_date,
-            '00:00:00',
-            '00:00:00',
-            'absent'
-        FROM events e
-        WHERE e.event_date < NOW()
-        AND e.status = 'Active'
-        AND NOT EXISTS (
-            SELECT 1 
-            FROM attendance_report ar 
-            WHERE ar.student_id = ? 
-            AND ar.event_name = e.event_name
-            AND DATE(ar.date_time) = DATE(e.event_date)
-        )
-    ";
+    // // ===== AUTO-MARK ABSENT FOR PAST EVENTS =====
+    // $mark_absent_query = "
+    //     INSERT INTO attendance_report (student_id, event_name, date_time, time_in, time_out, remarks)
+    //     SELECT 
+    //         ?, 
+    //         e.event_name,
+    //         e.event_date,
+    //         '00:00:00',
+    //         '00:00:00',
+    //         'absent'
+    //     FROM events e
+    //     WHERE e.event_date < NOW()
+    //     AND e.status = 'Active'
+    //     AND NOT EXISTS (
+    //         SELECT 1 
+    //         FROM attendance_report ar 
+    //         WHERE ar.student_id = ? 
+    //         AND ar.event_name = e.event_name
+    //         AND DATE(ar.date_time) = DATE(e.event_date)
+    //     )
+    // ";
     
-    $mark_absent_stmt = $conn->prepare($mark_absent_query);
-    if ($mark_absent_stmt) {
-        $mark_absent_stmt->bind_param("ii", $student_id, $student_id);
-        $mark_absent_stmt->execute();
-        $mark_absent_stmt->close();
-    }
+    // $mark_absent_stmt = $conn->prepare($mark_absent_query);
+    // if ($mark_absent_stmt) {
+    //     $mark_absent_stmt->bind_param("ii", $student_id, $student_id);
+    //     $mark_absent_stmt->execute();
+    //     $mark_absent_stmt->close();
+    // }
 
     // ===== GET ATTENDANCE RECORDS =====
     $attendance_query = "

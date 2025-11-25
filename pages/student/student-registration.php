@@ -234,6 +234,7 @@ $verify_stmt->close();
                                 <option value="Set B">Set B</option>
                                 <option value="Set C">Set C</option>
                                 <option value="Set D">Set D</option>
+                                <option value="Set E">Set E</option>
                             </select>
                         </div>
                         <div class="form-group full-width">

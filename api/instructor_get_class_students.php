@@ -1,6 +1,7 @@
 <?php
-// File: C:\laragon\www\sccqr\api\get_class_students.php
-// CORRECTED VERSION - Fixed column name issue
+// File: C:\laragon\www\sccqr\api\instructor_get_class_students.php
+// INSTRUCTOR-ONLY API - Does NOT affect admin or other dashboards
+// Uses 4 Absence = Inactive Rule
 
 session_start();
 header('Access-Control-Allow-Origin: *');
@@ -146,11 +147,12 @@ try {
     while ($row = $result->fetch_assoc()) {
         $studentId = $row['student_id'];
         
-        // ✅ FIXED: Using date_time instead of date
+        // Get attendance with absence counting
         $attendanceSql = "SELECT 
                 event_name,
                 DATE(date_time) as attendance_date,
                 time_in,
+                time_out,
                 remarks
               FROM attendance_report 
               WHERE student_id = ?
@@ -161,6 +163,7 @@ try {
             error_log('Attendance prepare failed for student ' . $studentId . ': ' . $conn->error);
             $attendance = [];
             $presentCount = 0;
+            $absentCount = 0;
         } else {
             $attendanceStmt->bind_param('i', $studentId);
             
@@ -168,13 +171,25 @@ try {
                 error_log('Attendance execute failed for student ' . $studentId . ': ' . $attendanceStmt->error);
                 $attendance = [];
                 $presentCount = 0;
+                $absentCount = 0;
             } else {
                 $attendanceResult = $attendanceStmt->get_result();
                 $attendance = [];
                 $presentCount = 0;
+                $absentCount = 0;
                 
                 while ($attRow = $attendanceResult->fetch_assoc()) {
-                    $status = ucfirst(strtolower($attRow['remarks'] ?? 'Absent'));
+                    $remarks = strtolower($attRow['remarks'] ?? 'absent');
+                    $timeIn = $attRow['time_in'] ?? '00:00:00';
+                    $timeOut = $attRow['time_out'] ?? '00:00:00';
+                    
+                    // ===== COUNT ABSENCES (time_in = '00:00:00' AND time_out = '00:00:00') =====
+                    if ($timeIn === '00:00:00' && $timeOut === '00:00:00') {
+                        $absentCount++;
+                        $status = 'Absent';
+                    } else {
+                        $status = ucfirst($remarks);
+                    }
                     
                     if ($status === 'Present') {
                         $presentCount++;
@@ -182,8 +197,8 @@ try {
                     
                     // Format time
                     $formattedTime = 'N/A';
-                    if ($attRow['time_in'] && $attRow['time_in'] !== '00:00:00') {
-                        $time = DateTime::createFromFormat('H:i:s', $attRow['time_in']);
+                    if ($timeIn && $timeIn !== '00:00:00') {
+                        $time = DateTime::createFromFormat('H:i:s', $timeIn);
                         if ($time) {
                             $formattedTime = $time->format('h:i A');
                         }
@@ -201,6 +216,26 @@ try {
             $attendanceStmt->close();
         }
         
+        // ===== CHECK MANUAL ARCHIVE STATUS =====
+        $archiveQuery = "SELECT is_archived FROM student_archive WHERE student_id = ? LIMIT 1";
+        $archiveStmt = $conn->prepare($archiveQuery);
+        $isManuallyArchived = false;
+        
+        if ($archiveStmt) {
+            $archiveStmt->bind_param('i', $studentId);
+            if ($archiveStmt->execute()) {
+                $archiveResult = $archiveStmt->get_result();
+                if ($archiveResult->num_rows > 0) {
+                    $archiveRow = $archiveResult->fetch_assoc();
+                    $isManuallyArchived = (int)$archiveRow['is_archived'] === 1;
+                }
+            }
+            $archiveStmt->close();
+        }
+        
+        // ===== INSTRUCTOR RULE: Manual Archive OR 4+ Absences = Inactive =====
+        $studentStatus = ($isManuallyArchived || $absentCount >= 4) ? 'Inactive' : 'Active';
+        
         $students[] = [
             'id' => (string)$studentId,
             'name' => trim($row['full_name']),
@@ -208,9 +243,11 @@ try {
             'year' => str_replace(' Year', '', $row['year_level']),
             'course' => $row['course'],
             'sex' => $row['sex'],
-            'status' => 'Active',
+            'status' => $studentStatus,
             'attendance' => $attendance,
-            'attendanceCount' => $presentCount
+            'attendanceCount' => $presentCount,
+            'absentCount' => $absentCount,
+            'isManuallyArchived' => $isManuallyArchived
         ];
     }
     

@@ -4,7 +4,7 @@
   "settings": {
     "width": 2000,
     "height": 2000,
-    "scrollTop": -106,
+    "scrollTop": -6,
     "scrollLeft": -21.9298,
     "zoomLevel": 0.94,
     "show": 431,
@@ -423,36 +423,8 @@
         }
       }
     },
-    "indexEntities": {
-      "1ivSzpME3gp3QvlPmEddY": {
-        "id": "1ivSzpME3gp3QvlPmEddY",
-        "name": "",
-        "tableId": "_Y4gIPhb6PzOwITy5N6NX",
-        "indexColumnIds": [
-          "m7PWU0Agmc4Vm9XKyALM5"
-        ],
-        "seqIndexColumnIds": [
-          "m7PWU0Agmc4Vm9XKyALM5"
-        ],
-        "unique": true,
-        "meta": {
-          "updateAt": 1756530383215,
-          "createAt": 1756530380978
-        }
-      }
-    },
-    "indexColumnEntities": {
-      "m7PWU0Agmc4Vm9XKyALM5": {
-        "id": "m7PWU0Agmc4Vm9XKyALM5",
-        "indexId": "1ivSzpME3gp3QvlPmEddY",
-        "columnId": "rzsbj9q_uTOV_QdMoLAhw",
-        "orderType": 1,
-        "meta": {
-          "updateAt": 1756530383214,
-          "createAt": 1756530383214
-        }
-      }
-    },
+    "indexEntities": {},
+    "indexColumnEntities": {},
     "memoEntities": {}
   }
 }

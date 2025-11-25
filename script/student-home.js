@@ -6,7 +6,6 @@ class AttendanceDataManager {
         this.activeSession = null;
         this.stats = null;
         this.isLoading = false;
-        this.eventFilters = [];
         this.currentFilter = null;
     }
 
@@ -42,9 +41,6 @@ class AttendanceDataManager {
                     isActive: record.is_active
                 }));
 
-                // Extract unique event descriptions for filtering
-                this.eventFilters = response.event_filters || [];
-
                 this.attendanceData = [...this.allRecords];
 
                 if (response.active_session) {
@@ -60,7 +56,6 @@ class AttendanceDataManager {
                 this.stats = response.stats;
                 
                 console.log('✅ Loaded records:', this.attendanceData.length);
-                console.log('✅ Available filters:', this.eventFilters);
                 console.log('✅ Active session:', this.activeSession);
                 
                 this.isLoading = false;
@@ -86,24 +81,20 @@ class AttendanceDataManager {
         }
     }
 
-    // Filter records by event description
-    filterByDescription(description) {
-        if (!description || description === 'all') {
+    // Filter records by status (present, late, absent, pending)
+    filterByStatus(status) {
+        if (!status || status === 'all') {
             this.attendanceData = [...this.allRecords];
             this.currentFilter = null;
         } else {
             this.attendanceData = this.allRecords.filter(record => 
-                record.description === description
+                record.status === status.toLowerCase()
             );
-            this.currentFilter = description;
+            this.currentFilter = status;
         }
         
-        console.log('🔍 Filtered to', this.attendanceData.length, 'records');
+        console.log('🔍 Filtered to', this.attendanceData.length, 'records for status:', status);
         return this.attendanceData;
-    }
-
-    getAvailableFilters() {
-        return this.eventFilters;
     }
 
     getCurrentFilter() {
@@ -354,10 +345,20 @@ class UIManager {
         this.attendanceManager = new AttendanceDataManager();
         this.scannerManager = new QRScannerManager();
         this.currentScanMode = null;
+        this.isArchived = false;              
+        this.archiveInfo = null; 
         this.initializeComponents();
     }
 
     async initializeComponents() {
+
+        await this.checkArchiveStatus();
+        
+        this.scannerManager.init(
+            (decodedText) => this.handleScanSuccess(decodedText),
+            (error) => this.handleScanError(error)
+        );
+
         this.scannerManager.init(
             (decodedText) => this.handleScanSuccess(decodedText),
             (error) => this.handleScanError(error)
@@ -387,36 +388,101 @@ class UIManager {
                 `<br><button onclick="location.reload()" style="margin-top: 10px;">Refresh Page</button>` +
                 `</td></tr>`
             );
-        }
-        
+        }        
+
         this.bindEventListeners();
         this.updateScanButtonState();
     }
 
+    async checkArchiveStatus() {
+    try {
+        const response = await $.ajax({
+            url: '../../sql_php/check_archive_status.php',
+            type: 'GET',
+            dataType: 'json',
+            cache: false
+        });
+
+        if (response.success && response.is_archived) {
+            this.isArchived = true;
+            this.archiveInfo = {
+                reason: response.archive_reason,
+                date: response.archived_date
+            };
+            console.log('⚠️ Student is archived:', this.archiveInfo);
+            this.showArchivedNotification();
+        } else {
+            this.isArchived = false;
+            console.log('✅ Student is active');
+        }
+    } catch (error) {
+        console.error('Error checking archive status:', error);
+    }
+}
+
+showArchivedNotification() {
+    // Disable time-in button and show notification
+    $('#timeInBtn').prop('disabled', true).css({
+        'opacity': '0.5',
+        'cursor': 'not-allowed'
+    });
+
+    // Add archive notice above QR scanner
+    const archiveNotice = `
+        <div class="archive-notice" style="
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        ">
+            <div style="font-size: 48px; margin-bottom: 10px;">🚫</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 22px; font-weight: bold;">Account Archived</h3>
+            <p style="margin: 5px 0; font-size: 16px; line-height: 1.6;">
+                Your account has been temporarily archived.<br>
+                <strong>Reason:</strong> ${this.archiveInfo.reason || 'Administrative action'}
+            </p>
+            <div style="
+                background: rgba(255, 255, 255, 0.2);
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                font-size: 18px;
+                font-weight: bold;
+            ">
+                📍 Please report to the SASO Office
+            </div>
+            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+                Time-in functionality is currently disabled
+            </p>
+        </div>
+    `;
+    
+    $('.qr-scanner-container').prepend(archiveNotice);
+}
+
     setupFilterDropdown() {
-        const filters = this.attendanceManager.getAvailableFilters();
         const filterContainer = $('#filterContainer');
         
-        if (filterContainer.length === 0 || filters.length === 0) {
-            console.log('No filters available');
-            filterContainer.html('<span style="color: #666;">No event types available</span>');
-            return;
-        }
-
-        let filterHTML = '<select id="eventFilter" class="filter-select"><option value="all">All Events</option>';
+        let filterHTML = `
+            <select id="statusFilter" class="filter-select">
+                <option value="all">All Remarks</option>
+                <option value="present">Present</option>
+                <option value="late">Late</option>
+                <option value="absent">Absent</option>
+                <option value="pending">Pending</option>
+            </select>
+        `;
         
-        filters.forEach(filter => {
-            filterHTML += `<option value="${filter}">${filter}</option>`;
-        });
-        
-        filterHTML += '</select>';
         filterContainer.html(filterHTML);
 
-        $('#eventFilter').on('change', (e) => {
+        $('#statusFilter').on('change', (e) => {
             const selectedFilter = $(e.target).val();
-            console.log('🔍 Applying filter:', selectedFilter);
-            this.attendanceManager.filterByDescription(selectedFilter);
-            this.updateAttendanceStats();
+            console.log('🔍 Applying status filter:', selectedFilter);
+            this.attendanceManager.filterByStatus(selectedFilter);
             this.populateAttendanceTable();
         });
     }
@@ -443,6 +509,13 @@ class UIManager {
     }
 
     startTimeInScan() {
+        
+    if (this.isArchived) {
+        alert('❌ Your account is archived. Time-in is disabled.\n\n📍 Please report to the SASO Office for assistance.');
+        return;
+    }
+
+
         if (this.attendanceManager.hasActiveSession()) {
             alert('You already have an active session. Please time out first.');
             return;

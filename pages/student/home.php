@@ -129,7 +129,7 @@ session_start();
             <!-- Filter and Export Controls -->
             <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <label for="eventFilter" style="font-weight: 600; font-size: 14px;">Filter by Event Type:</label>
+                    <label for="eventFilter" style="font-weight: 600; font-size: 14px;">Filter by Remarks:</label>
                     <div id="filterContainer"></div>
                 </div>
                 <button class="btn btn-primary" id="exportPdfBtn" style="margin-left: auto;">

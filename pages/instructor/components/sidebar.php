@@ -10,13 +10,7 @@
     
     <ul class="sidebar-nav">
         <li class="nav-item">
-            <button class="nav-button active" data-page="live-attendance">
-                <span class="nav-icon">📊</span>
-                Live Attendance
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-button" data-page="class-management">
+            <button class="nav-button active" data-page="class-management">
                 <span class="nav-icon">👥</span>
                 Class Management
             </button>

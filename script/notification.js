@@ -1,5 +1,303 @@
-// Enhanced Notification System
+// Enhanced Notification System with Configurable Duration
 const Notifications = (function() {
+    
+    // Create styles if not already added
+    function addStyles() {
+        if (document.getElementById('notification-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            /* Toast Container */
+            .toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                pointer-events: none;
+            }
+            
+            /* Toast Notification */
+            .toast {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                background: white;
+                padding: 16px 20px;
+                margin-bottom: 12px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                pointer-events: auto;
+                animation: slideIn 0.3s ease-out;
+                min-width: 300px;
+                max-width: 500px;
+                position: relative;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+            
+            .toast.hiding {
+                animation: slideOut 0.3s ease-in;
+            }
+            
+            .toast-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+            
+            .toast-content {
+                flex: 1;
+            }
+            
+            .toast-title {
+                font-weight: 600;
+                margin-bottom: 4px;
+                font-size: 15px;
+            }
+            
+            .toast-message {
+                font-size: 14px;
+                opacity: 0.8;
+                line-height: 1.4;
+            }
+            
+            .toast-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 20px;
+                opacity: 0.5;
+                transition: opacity 0.2s;
+                flex-shrink: 0;
+                padding: 0;
+                margin-left: 8px;
+                line-height: 1;
+            }
+            
+            .toast-close:hover {
+                opacity: 1;
+            }
+            
+            /* Progress bar */
+            .toast-progress {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 3px;
+                background: rgba(0, 0, 0, 0.2);
+                width: 100%;
+                transform-origin: left;
+                animation: progress linear;
+            }
+            
+            @keyframes progress {
+                from {
+                    transform: scaleX(1);
+                }
+                to {
+                    transform: scaleX(0);
+                }
+            }
+            
+            /* Toast Types */
+            .toast-success {
+                border-left: 4px solid #28a745;
+            }
+            
+            .toast-success .toast-icon {
+                color: #28a745;
+            }
+            
+            .toast-success .toast-progress {
+                background: #28a745;
+            }
+            
+            .toast-error {
+                border-left: 4px solid #dc3545;
+            }
+            
+            .toast-error .toast-icon {
+                color: #dc3545;
+            }
+            
+            .toast-error .toast-progress {
+                background: #dc3545;
+            }
+            
+            .toast-warning {
+                border-left: 4px solid #ffc107;
+            }
+            
+            .toast-warning .toast-icon {
+                color: #ffc107;
+            }
+            
+            .toast-warning .toast-progress {
+                background: #ffc107;
+            }
+            
+            .toast-info {
+                border-left: 4px solid #0066cc;
+            }
+            
+            .toast-info .toast-icon {
+                color: #0066cc;
+            }
+            
+            .toast-info .toast-progress {
+                background: #0066cc;
+            }
+            
+            /* Confirm Dialog Overlay */
+            .confirm-dialog-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            
+            .confirm-dialog-overlay.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            
+            /* Confirm Dialog */
+            .confirm-dialog {
+                background: white;
+                border-radius: 12px;
+                padding: 32px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                text-align: center;
+                max-width: 400px;
+                animation: dialogAppear 0.3s ease-out;
+            }
+            
+            @keyframes dialogAppear {
+                from {
+                    transform: scale(0.9);
+                    opacity: 0;
+                }
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+            
+            .confirm-dialog-icon {
+                font-size: 48px;
+                margin-bottom: 16px;
+                display: block;
+            }
+            
+            .confirm-dialog-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0 0 12px 0;
+                color: #333;
+            }
+            
+            .confirm-dialog-message {
+                font-size: 14px;
+                color: #666;
+                margin: 0 0 24px 0;
+                line-height: 1.5;
+            }
+            
+            .confirm-dialog-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+            }
+            
+            .confirm-dialog-btn {
+                padding: 10px 24px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.2s;
+                min-width: 100px;
+            }
+            
+            .confirm-dialog-btn.primary {
+                background: #0066cc;
+                color: white;
+            }
+            
+            .confirm-dialog-btn.primary:hover {
+                background: #0052a3;
+            }
+            
+            .confirm-dialog-btn.secondary {
+                background: #e9ecef;
+                color: #333;
+            }
+            
+            .confirm-dialog-btn.secondary:hover {
+                background: #dee2e6;
+            }
+            
+            .confirm-dialog-btn.danger {
+                background: #dc3545;
+                color: white;
+            }
+            
+            .confirm-dialog-btn.danger:hover {
+                background: #c82333;
+            }
+            
+            /* Mobile Responsive */
+            @media (max-width: 768px) {
+                .toast-container {
+                    top: 10px;
+                    right: 10px;
+                    left: 10px;
+                }
+                
+                .toast {
+                    min-width: auto;
+                    max-width: none;
+                }
+                
+                .confirm-dialog {
+                    margin: 20px;
+                    max-width: calc(100% - 40px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
     
     // Create toast container if it doesn't exist
     function createToastContainer() {
@@ -11,8 +309,9 @@ const Notifications = (function() {
         }
     }
     
-    // Show toast notification
-    function showToast(message, type = 'success', title = '') {
+    // Show toast notification with configurable duration
+    function showToast(message, type = 'success', title = '', duration = 5000) {
+        addStyles();
         createToastContainer();
         
         const icons = {
@@ -38,15 +337,37 @@ const Notifications = (function() {
                 <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close" onclick="Notifications.closeToast(this)">×</button>
+            <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
         `;
         
         const container = document.getElementById('toast-container');
         container.appendChild(toast);
         
-        // Auto remove after 4 seconds
-        setTimeout(() => {
-            closeToast(toast);
-        }, 4000);
+        // Pause on hover
+        let timeoutId;
+        let remainingTime = duration;
+        let startTime = Date.now();
+        let progressBar = toast.querySelector('.toast-progress');
+        
+        function startTimeout() {
+            startTime = Date.now();
+            progressBar.style.animationPlayState = 'running';
+            timeoutId = setTimeout(() => {
+                closeToast(toast);
+            }, remainingTime);
+        }
+        
+        function pauseTimeout() {
+            clearTimeout(timeoutId);
+            remainingTime -= Date.now() - startTime;
+            progressBar.style.animationPlayState = 'paused';
+        }
+        
+        toast.addEventListener('mouseenter', pauseTimeout);
+        toast.addEventListener('mouseleave', startTimeout);
+        
+        // Start auto-close timer
+        startTimeout();
         
         return toast;
     }
@@ -67,6 +388,8 @@ const Notifications = (function() {
     // Show confirmation dialog
     function confirm(options) {
         return new Promise((resolve) => {
+            addStyles();
+            
             const defaults = {
                 title: 'Confirm Action',
                 message: 'Are you sure you want to proceed?',
@@ -88,7 +411,9 @@ const Notifications = (function() {
                 warning: '⚠️',
                 danger: '🚨',
                 info: 'ℹ️',
-                question: '❓'
+                question: '❓',
+                success: '✓',
+                error: '✕'
             };
             
             overlay.innerHTML = `
@@ -115,8 +440,11 @@ const Notifications = (function() {
             document.getElementById('confirm-ok').addEventListener('click', () => {
                 overlay.classList.remove('active');
                 setTimeout(() => {
-                    document.body.removeChild(overlay);
+                    if (document.body.contains(overlay)) {
+                        document.body.removeChild(overlay);
+                    }
                     config.onConfirm();
+                    resolve(true);
                 }, 300);
             });
             
@@ -124,8 +452,11 @@ const Notifications = (function() {
             document.getElementById('confirm-cancel').addEventListener('click', () => {
                 overlay.classList.remove('active');
                 setTimeout(() => {
-                    document.body.removeChild(overlay);
+                    if (document.body.contains(overlay)) {
+                        document.body.removeChild(overlay);
+                    }
                     config.onCancel();
+                    resolve(false);
                 }, 300);
             });
             
@@ -141,6 +472,8 @@ const Notifications = (function() {
     // Show alert dialog
     function alert(options) {
         return new Promise((resolve) => {
+            addStyles();
+            
             const defaults = {
                 title: 'Alert',
                 message: 'This is an alert message',
@@ -181,7 +514,9 @@ const Notifications = (function() {
             document.getElementById('alert-ok').addEventListener('click', () => {
                 overlay.classList.remove('active');
                 setTimeout(() => {
-                    document.body.removeChild(overlay);
+                    if (document.body.contains(overlay)) {
+                        document.body.removeChild(overlay);
+                    }
                     resolve();
                 }, 300);
             });
@@ -194,14 +529,21 @@ const Notifications = (function() {
         });
     }
     
-    // Public API
+    // Public API with configurable durations
     return {
+        // Main toast function with custom duration
         toast: showToast,
-        success: (message, title) => showToast(message, 'success', title),
-        error: (message, title) => showToast(message, 'error', title),
-        warning: (message, title) => showToast(message, 'warning', title),
-        info: (message, title) => showToast(message, 'info', title),
+        
+        // Convenience methods with default durations
+        success: (message, title, duration = 5000) => showToast(message, 'success', title, duration),
+        error: (message, title, duration = 7000) => showToast(message, 'error', title, duration),
+        warning: (message, title, duration = 6000) => showToast(message, 'warning', title, duration),
+        info: (message, title, duration = 5000) => showToast(message, 'info', title, duration),
+        
+        // Close toast manually
         closeToast: closeToast,
+        
+        // Dialog methods
         confirm: confirm,
         alert: alert
     };

@@ -1,7 +1,8 @@
 <?php
 // File: C:\laragon\www\sccqr\api\get_students_with_attendance.php
+// FIXED VERSION - Auto-inactive at 4+ absences
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors in production
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 header('Content-Type: application/json');
@@ -9,7 +10,6 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -18,31 +18,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once '../sql_php/connection.php';
 
 try {
-    // Validate database connection
     if (!isset($conn) || $conn->connect_error) {
         throw new Exception("Database connection failed: " . ($conn->connect_error ?? 'Unknown error'));
     }
 
-    // Get all students from student table
     $sql = "SELECT 
-                user_id,
-                student_id,
+                s.user_id,
+                s.student_id,
                 CONCAT(
-                    IFNULL(first_name, ''), 
+                    IFNULL(s.first_name, ''), 
                     ' ', 
-                    IFNULL(middle_initial, ''), 
-                    IF(middle_initial != '', '. ', ' '),
-                    IFNULL(last_name, '')
+                    IFNULL(s.middle_initial, ''), 
+                    IF(s.middle_initial != '', '. ', ' '),
+                    IFNULL(s.last_name, '')
                 ) as full_name,
-                first_name,
-                middle_initial,
-                last_name,
-                IFNULL(year_level, 'N/A') as year_level,
-                IFNULL(student_set, 'N/A') as student_set,
-                IFNULL(course, 'N/A') as course,
-                IFNULL(sex, 'N/A') as sex
-            FROM student
-            ORDER BY last_name ASC, first_name ASC";
+                s.first_name,
+                s.middle_initial,
+                s.last_name,
+                IFNULL(s.year_level, 'N/A') as year_level,
+                IFNULL(s.student_set, 'N/A') as student_set,
+                IFNULL(s.course, 'N/A') as course,
+                IFNULL(s.sex, 'N/A') as sex,
+                COALESCE(sa.is_archived, 0) as is_archived,
+                sa.archived_date,
+                sa.archive_reason,
+                sa.archived_by
+            FROM student s
+            LEFT JOIN student_archive sa ON s.student_id = sa.student_id
+            ORDER BY s.last_name ASC, s.first_name ASC";
     
     $result = $conn->query($sql);
     
@@ -55,7 +58,6 @@ try {
     while ($row = $result->fetch_assoc()) {
         $studentId = $row['student_id'];
         
-        // Get attendance records for this student with corrected column names
         $attendanceSql = "SELECT 
                             event_name,
                             DATE(date_time) as attendance_date,
@@ -96,10 +98,8 @@ try {
         $totalAttendance = 0;
         
         while ($attRow = $attendanceResult->fetch_assoc()) {
-            // The status comes from remarks column: present, late, or absent
             $status = strtolower($attRow['status']);
             
-            // Count attendance by status
             if ($status === 'present') {
                 $presentCount++;
             } elseif ($status === 'late') {
@@ -110,28 +110,42 @@ try {
             
             $totalAttendance++;
             
-            // Capitalize first letter for display
             $statusDisplay = ucfirst($status);
             
             $attendance[] = [
                 'event' => $attRow['event_name'],
-                'date' => $attRow['date'], // Numerical format: 2025-11-22
-                'date_formatted' => $attRow['date_formatted'], // Text format
+                'date' => $attRow['date'],
+                'date_formatted' => $attRow['date_formatted'],
                 'time_in' => $attRow['time_in_formatted'] ?? 'N/A',
                 'time_out' => $attRow['time_out_formatted'] ?? 'Pending',
-                'status' => $statusDisplay, // Present, Late, or Absent
-                'completion' => $attRow['completion_status'], // Complete or Incomplete
+                'status' => $statusDisplay,
+                'completion' => $attRow['completion_status'],
                 'is_complete' => $attRow['time_out'] !== null
             ];
         }
         
         $attendanceStmt->close();
         
-        // Calculate attendance rate (present + late = attended)
         $attendedCount = $presentCount + $lateCount;
         $attendanceRate = $totalAttendance > 0 
             ? round(($attendedCount / $totalAttendance) * 100, 1) 
             : 0;
+        
+        // ============================================
+        // FIXED: Auto-inactive at 4+ absences
+        // Manual archive overrides everything
+        // ============================================
+        $isManuallyArchived = (int)$row['is_archived'] === 1;
+        $isAutoInactive = ($absentCount >= 4 && !$isManuallyArchived);
+        
+        // Status determination
+        if ($isManuallyArchived) {
+            $studentStatus = 'Inactive';
+        } elseif ($absentCount >= 4) {
+            $studentStatus = 'Inactive';
+        } else {
+            $studentStatus = 'Active';
+        }
         
         $students[] = [
             'id' => (string)$studentId,
@@ -145,14 +159,20 @@ try {
             'set' => $row['student_set'],
             'course' => $row['course'],
             'sex' => $row['sex'],
-            'status' => 'Active',
+            'status' => $studentStatus,
+            'is_archived' => $isManuallyArchived,
+            'is_auto_inactive' => $isAutoInactive,
+            'archived_date' => $row['archived_date'],
+            'archive_reason' => $row['archive_reason'],
+            'archived_by' => $row['archived_by'],
+            'absentCount' => $absentCount,
             'attendance' => $attendance,
             'stats' => [
                 'total' => $totalAttendance,
                 'present' => $presentCount,
                 'late' => $lateCount,
                 'absent' => $absentCount,
-                'attended' => $attendedCount, // present + late
+                'attended' => $attendedCount,
                 'attendance_rate' => $attendanceRate,
                 'on_time_rate' => $totalAttendance > 0 
                     ? round(($presentCount / $totalAttendance) * 100, 1) 
@@ -161,8 +181,9 @@ try {
         ];
     }
     
-    // Calculate overall statistics
     $totalStudents = count($students);
+    $activeStudents = 0;
+    $inactiveStudents = 0;
     $studentsWithAttendance = 0;
     $overallPresentCount = 0;
     $overallLateCount = 0;
@@ -170,6 +191,12 @@ try {
     $overallTotalAttendance = 0;
     
     foreach ($students as $student) {
+        if ($student['status'] === 'Active') {
+            $activeStudents++;
+        } else {
+            $inactiveStudents++;
+        }
+        
         if ($student['stats']['total'] > 0) {
             $studentsWithAttendance++;
         }
@@ -188,6 +215,8 @@ try {
         'data' => $students,
         'summary' => [
             'total_students' => $totalStudents,
+            'active_students' => $activeStudents,
+            'inactive_students' => $inactiveStudents,
             'students_with_attendance' => $studentsWithAttendance,
             'total_attendance_records' => $overallTotalAttendance,
             'total_present' => $overallPresentCount,

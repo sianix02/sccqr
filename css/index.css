@@ -78,6 +78,13 @@ body {
     font-weight: 500;
 }
 
+/* Password Wrapper */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .form-group input {
     padding: 12px 15px;
     border: none;
@@ -85,12 +92,42 @@ body {
     background-color: var(--off-white);
     font-size: 14px;
     transition: all 0.3s;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 45px;
 }
 
 .form-group input:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
     background-color: var(--white);
+}
+
+/* Toggle Password Button */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px 8px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password:hover {
+    transform: scale(1.1);
+}
+
+.eye-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Button Styles */
@@ -164,11 +201,11 @@ body {
     font-size: 18px;
 }
 
-.logo-inner img{
+.logo-inner img {
     width: 100%;
 }
 
-#notif{
+#notif {
     width: 100%;
     text-align: center;
     color: red;

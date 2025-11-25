@@ -44,6 +44,30 @@ if (!in_array($action, ['time_in', 'time_out'])) {
     exit;
 }
 
+// Add archive check for time-in (add after getting $student_id)
+if ($action === 'time_in') {
+    $archive_check = $conn->prepare("
+        SELECT is_archived 
+        FROM student_archive 
+        WHERE student_id = ? AND is_archived = 1
+    ");
+    $archive_check->bind_param("s", $student_id);
+    $archive_check->execute();
+    $archive_result = $archive_check->get_result();
+    
+    if ($archive_result->num_rows > 0) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Your account is archived. Please report to the SASO Office.',
+            'archived' => true
+        ]);
+        $archive_check->close();
+        $conn->close();
+        exit;
+    }
+    $archive_check->close();
+}
+
 // Helper function to validate time format (HH:MM:SS or HH:MM)
 function validateTime($time) {
     $pattern = '/^([01][0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9]))?$/';

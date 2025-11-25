@@ -677,6 +677,21 @@
 
 .table-container table {
     min-width: 800px;
+    border-collapse: collapse;
+}
+
+.table-container th,
+.table-container td {
+    vertical-align: middle;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.table-container thead th {
+    background-color: var(--light-blue-bg);
+    color: var(--dark-blue);
+    font-weight: 600;
+    text-align: left;
 }
 
 /* Stat card hover effect */
@@ -711,6 +726,19 @@
 
 .table-container tbody tr:hover {
     background-color: #f8f9fa;
+}
+
+.table-container tbody td {
+    vertical-align: middle;
+}
+
+/* Action buttons container */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 /* Progress bar for attendance */
@@ -824,3 +852,345 @@ select:focus-visible {
     outline: 2px solid var(--primary-blue);
     outline-offset: 2px;
 }      
+
+/* Enhanced Student Management Styles */
+
+/* Filter controls styling */
+#filter-status,
+#filter-course,
+#filter-year {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#filter-status:focus,
+#filter-course:focus,
+#filter-year:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Filter info text */
+#filter-info {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Course badge in table */
+.table-container tbody td span {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.table-container tbody td span:hover {
+    transform: scale(1.05);
+}
+
+/* Attendance breakdown styling */
+.attendance-breakdown {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+}
+
+/* Status badge with icon */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #28a745;
+    color: white;
+}
+
+.status-badge.inactive {
+    background: #dc3545;
+    color: white;
+}
+
+/* Warning badge for high absences */
+.warning-badge {
+    font-size: 11px;
+    color: #dc3545;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Archive button special styling */
+.btn-archive {
+    background: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.btn-archive:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-restore {
+    background: #28a745;
+}
+
+.btn-restore:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+/* Export button styling */
+#export-all-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+#export-all-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Archive modal specific styles */
+#archive-modal .modal-content {
+    text-align: center;
+}
+
+#archive-modal h3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Student details modal enhancements */
+#detail-student-course {
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+
+/* Stat cards in details modal */
+.stat-card {
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Attendance history table styling */
+#attendance-history-body tr {
+    transition: background-color 0.2s ease;
+}
+
+#attendance-history-body tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Status badges in attendance history */
+#attendance-history-body .status-badge {
+    min-width: 70px;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+#attendance-history-body .status-badge:hover {
+    transform: scale(1.05);
+}
+
+/* Loading state improvements */
+.loading-spinner {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 4px solid rgba(0, 102, 204, 0.3);
+    border-radius: 50%;
+    border-top-color: #0066cc;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state styling */
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #666;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.empty-state-text {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.empty-state-subtext {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Filter controls container */
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Course badge colors */
+.course-badge {
+    background: #e8f4fd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0066cc;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.course-badge:hover {
+    background: #d0e8f9;
+    transform: translateY(-1px);
+}
+
+/* Responsive adjustments for new features */
+@media (max-width: 768px) {
+    .filter-controls {
+        width: 100%;
+    }
+    
+    .filter-controls select,
+    .filter-controls button {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    #export-all-pdf {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        font-size: 10px !important;
+        padding: 5px 8px !important;
+    }
+    
+    .attendance-breakdown {
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .course-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    .warning-badge {
+        font-size: 10px;
+    }
+}
+
+/* Animation for modals */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+#archive-modal > div {
+    animation: modalFadeIn 0.3s ease;
+}
+
+/* Highlight animation for new features */
+@keyframes highlight {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(0, 102, 204, 0.1);
+    }
+}
+
+.highlight-row {
+    animation: highlight 1s ease;
+}
+
+/* Tooltip styles for icons */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    pointer-events: none;
+}

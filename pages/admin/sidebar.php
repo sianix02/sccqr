@@ -13,7 +13,7 @@
             <div class="logo">
                 <div class="logo-inner"><img src="../../images/logo.png" alt=""></div>
             </div>
-            <div class="sidebar-title">Dashboard</div>
+            <div class="sidebar-title">Admin Dashboard</div>
         </div>
     </div>
     

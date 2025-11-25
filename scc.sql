@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 25, 2025 at 01:59 AM
+-- Generation Time: Nov 24, 2025 at 11:44 PM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.16
 
@@ -46,6 +46,52 @@ INSERT INTO `admin` (`admin_id`, `user_id`, `first_name`, `middle_initial`, `las
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `archive_history`
+--
+
+CREATE TABLE `archive_history` (
+  `history_id` int NOT NULL,
+  `student_id` bigint NOT NULL,
+  `action` enum('archive','restore') NOT NULL,
+  `action_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `performed_by` varchar(255) NOT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `notes` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `archive_history`
+--
+
+INSERT INTO `archive_history` (`history_id`, `student_id`, `action`, `action_date`, `performed_by`, `reason`, `notes`) VALUES
+(1, 10003, 'archive', '2025-11-24 08:14:05', 'Admin', 'Manual archive', 'Archived from student management'),
+(2, 10003, 'restore', '2025-11-24 08:33:34', 'Admin', NULL, 'Restored from archive'),
+(3, 10003, 'archive', '2025-11-24 08:33:55', 'Admin', 'Manual archive', 'Archived from student management'),
+(4, 10004, 'archive', '2025-11-24 08:34:16', 'Admin', 'Manual archive', 'Archived from student management'),
+(5, 10005, 'archive', '2025-11-24 08:43:24', 'Admin', 'Manual archive', 'Archived from student management'),
+(6, 10005, 'restore', '2025-11-24 08:43:45', 'Admin', NULL, 'Restored from archive'),
+(7, 10004, 'restore', '2025-11-24 08:43:52', 'Admin', NULL, 'Restored from archive'),
+(8, 10003, 'restore', '2025-11-24 08:43:54', 'Admin', NULL, 'Restored from archive'),
+(9, 10003, 'archive', '2025-11-24 08:49:22', 'Admin', 'Manual archive', 'Archived from student management'),
+(10, 10003, 'restore', '2025-11-24 10:27:57', 'Admin', NULL, 'Restored from archive'),
+(11, 10003, 'archive', '2025-11-25 06:19:57', 'Admin', 'Manual archive', 'Archived from student management'),
+(12, 10003, 'restore', '2025-11-25 06:20:06', 'Admin', NULL, 'Restored from archive'),
+(13, 10003, 'archive', '2025-11-25 06:20:10', 'Admin', 'Manual archive', 'Archived from student management'),
+(14, 10003, 'restore', '2025-11-25 06:20:38', 'Admin', NULL, 'Restored from archive'),
+(15, 10003, 'archive', '2025-11-25 06:24:04', 'Admin', 'Manual archive', 'Archived from student management'),
+(16, 10003, 'restore', '2025-11-25 06:24:35', 'Admin', NULL, 'Restored from archive'),
+(17, 20220721155403, 'archive', '2025-11-25 07:18:21', 'Admin', 'Manual archive', 'Archived from student management'),
+(18, 20220721155403, 'restore', '2025-11-25 07:34:09', 'Admin', NULL, 'Restored from archive'),
+(19, 20220721155403, 'archive', '2025-11-25 07:35:01', 'Admin', 'Manual archive', 'Archived from student management'),
+(20, 10003, 'archive', '2025-11-25 07:36:19', 'Admin', 'Manual archive', 'Archived from student management'),
+(21, 10003, 'restore', '2025-11-25 07:36:24', 'Admin', NULL, 'Restored from archive'),
+(22, 20220721155403, 'restore', '2025-11-25 07:36:26', 'Admin', NULL, 'Restored from archive'),
+(23, 10003, 'archive', '2025-11-25 07:37:53', 'Admin', 'Manual archive', 'Archived from student management'),
+(24, 10003, 'restore', '2025-11-25 07:37:59', 'Admin', NULL, 'Restored from archive');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `attendance_report`
 --
 
@@ -53,7 +99,7 @@ CREATE TABLE `attendance_report` (
   `attendance_id` int NOT NULL,
   `student_id` bigint NOT NULL,
   `event_name` varchar(255) NOT NULL,
-  `date` date NOT NULL,
+  `date_time` datetime DEFAULT NULL,
   `time_in` time NOT NULL,
   `time_out` time DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL
@@ -63,271 +109,40 @@ CREATE TABLE `attendance_report` (
 -- Dumping data for table `attendance_report`
 --
 
-INSERT INTO `attendance_report` (`attendance_id`, `student_id`, `event_name`, `date`, `time_in`, `time_out`, `remarks`) VALUES
-(12, 10003, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(13, 10003, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(14, 10003, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(15, 10003, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(16, 10003, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(17, 10004, 'SCC NIGHT', '2025-09-15', '18:15:00', '21:30:00', 'present'),
-(18, 10004, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(19, 10004, 'SPORTS FEST', '2025-09-25', '07:45:00', '17:00:00', 'present'),
-(20, 10004, 'CAREER SUMMIT', '2025-10-01', '09:20:00', '16:00:00', 'late'),
-(21, 10004, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(22, 10005, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(23, 10005, 'ORIENTATION DAY', '2025-08-20', '08:10:00', '12:00:00', 'present'),
-(24, 10005, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(25, 10005, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(26, 10005, 'GRADUATION BALL', '2025-10-10', '19:30:00', '23:00:00', 'late'),
-(27, 10006, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(28, 10006, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(29, 10006, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(30, 10006, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(31, 10006, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(32, 10007, 'SCC NIGHT', '2025-09-15', '18:20:00', '21:30:00', 'late'),
-(33, 10007, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(34, 10007, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(35, 10007, 'CAREER SUMMIT', '2025-10-01', '09:15:00', '16:00:00', 'present'),
-(36, 10007, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(37, 10008, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(38, 10008, 'ORIENTATION DAY', '2025-08-20', '08:05:00', '12:00:00', 'late'),
-(39, 10008, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(40, 10008, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(41, 10008, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(42, 10009, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(43, 10009, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(44, 10009, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(45, 10009, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(46, 10009, 'GRADUATION BALL', '2025-10-10', '19:10:00', '23:00:00', 'late'),
-(47, 10010, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(48, 10010, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(49, 10010, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(50, 10010, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(51, 10010, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(52, 10011, 'SCC NIGHT', '2025-09-15', '18:25:00', '21:30:00', 'late'),
-(53, 10011, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(54, 10011, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(55, 10011, 'CAREER SUMMIT', '2025-10-01', '09:10:00', '16:00:00', 'present'),
-(56, 10011, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(57, 10012, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(58, 10012, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(59, 10012, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(60, 10012, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(61, 10012, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(62, 10013, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(63, 10013, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(64, 10013, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(65, 10013, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(66, 10013, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(67, 10014, 'SCC NIGHT', '2025-09-15', '18:10:00', '21:30:00', 'present'),
-(68, 10014, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(69, 10014, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(70, 10014, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(71, 10014, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(72, 10015, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(73, 10015, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(74, 10015, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(75, 10015, 'CAREER SUMMIT', '2025-10-01', '09:05:00', '16:00:00', 'absent'),
-(76, 10015, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(77, 10016, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(78, 10016, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(79, 10016, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(80, 10016, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(81, 10016, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(82, 10017, 'SCC NIGHT', '2025-09-15', '18:30:00', '21:30:00', 'late'),
-(83, 10017, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(84, 10017, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(85, 10017, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(86, 10017, 'GRADUATION BALL', '2025-10-10', '19:15:00', '23:00:00', 'late'),
-(87, 10018, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(88, 10018, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(89, 10018, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(90, 10018, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(91, 10018, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(92, 10019, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(93, 10019, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(94, 10019, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(95, 10019, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(96, 10019, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(97, 10020, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(98, 10020, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(99, 10020, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(100, 10020, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(101, 10020, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(102, 10021, 'SCC NIGHT', '2025-09-15', '18:20:00', '21:30:00', 'absent'),
-(103, 10021, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(104, 10021, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(105, 10021, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(106, 10021, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(107, 10022, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(108, 10022, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(109, 10022, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(110, 10022, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(111, 10022, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(112, 10023, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(113, 10023, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(114, 10023, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(115, 10023, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(116, 10023, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(117, 10024, 'SCC NIGHT', '2025-09-15', '18:05:00', '21:30:00', 'absent'),
-(118, 10024, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(119, 10024, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(120, 10024, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(121, 10024, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(122, 10025, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(123, 10025, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(124, 10025, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(125, 10025, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(126, 10025, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(127, 10026, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(128, 10026, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(129, 10026, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(130, 10026, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(131, 10026, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(132, 10027, 'SCC NIGHT', '2025-09-15', '18:15:00', '21:30:00', 'absent'),
-(133, 10027, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(134, 10027, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(135, 10027, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(136, 10027, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(137, 10028, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(138, 10028, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(139, 10028, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(140, 10028, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(141, 10028, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(142, 10029, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(143, 10029, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(144, 10029, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(145, 10029, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(146, 10029, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(147, 10030, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(148, 10030, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(149, 10030, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(150, 10030, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(151, 10030, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(152, 10031, 'SCC NIGHT', '2025-09-15', '18:25:00', '21:30:00', 'late'),
-(153, 10031, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(154, 10031, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(155, 10031, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(156, 10031, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(157, 10032, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(158, 10032, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(159, 10032, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(160, 10032, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(161, 10032, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(162, 10033, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(163, 10033, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(164, 10033, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(165, 10033, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(166, 10033, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(167, 10034, 'SCC NIGHT', '2025-09-15', '18:10:00', '21:30:00', 'present'),
-(168, 10034, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(169, 10034, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(170, 10034, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(171, 10034, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(172, 10035, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(173, 10035, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(174, 10035, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(175, 10035, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(176, 10035, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(177, 10036, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(178, 10036, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(179, 10036, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(180, 10036, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(181, 10036, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(182, 10037, 'SCC NIGHT', '2025-09-15', '18:20:00', '21:30:00', 'late'),
-(183, 10037, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(184, 10037, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(185, 10037, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(186, 10037, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(187, 10038, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(188, 10038, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(189, 10038, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(190, 10038, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(191, 10038, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(192, 10039, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(193, 10039, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(194, 10039, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(195, 10039, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(196, 10039, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(197, 10040, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(198, 10040, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(199, 10040, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(200, 10040, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(201, 10040, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(202, 10041, 'SCC NIGHT', '2025-09-15', '18:30:00', '21:30:00', 'late'),
-(203, 10041, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(204, 10041, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(205, 10041, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(206, 10041, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(207, 10042, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(208, 10042, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(209, 10042, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(210, 10042, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(211, 10042, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(212, 10043, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(213, 10043, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(214, 10043, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(215, 10043, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(216, 10043, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(217, 10044, 'SCC NIGHT', '2025-09-15', '18:05:00', '21:30:00', 'present'),
-(218, 10044, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(219, 10044, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(220, 10044, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(221, 10044, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(222, 10045, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(223, 10045, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(224, 10045, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(225, 10045, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(226, 10045, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(227, 10046, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(228, 10046, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(229, 10046, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(230, 10046, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(231, 10046, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(232, 10047, 'SCC NIGHT', '2025-09-15', '18:15:00', '21:30:00', 'late'),
-(233, 10047, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(234, 10047, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(235, 10047, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(236, 10047, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(237, 10048, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'absent'),
-(238, 10048, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(239, 10048, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(240, 10048, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(241, 10048, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(242, 10049, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'late'),
-(243, 10049, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(244, 10049, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(245, 10049, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'present'),
-(246, 10049, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(247, 10050, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(248, 10050, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'late'),
-(249, 10050, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'absent'),
-(250, 10050, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(251, 10050, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'present'),
-(252, 10051, 'SCC NIGHT', '2025-09-15', '18:20:00', '21:30:00', 'absent'),
-(253, 10051, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'present'),
-(254, 10051, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'late'),
-(255, 10051, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'absent'),
-(256, 10051, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'late'),
-(257, 10052, 'SCC NIGHT', '2025-09-15', '18:00:00', '21:30:00', 'present'),
-(258, 10052, 'ORIENTATION DAY', '2025-08-20', '08:00:00', '12:00:00', 'absent'),
-(259, 10052, 'SPORTS FEST', '2025-09-25', '07:30:00', '17:00:00', 'present'),
-(260, 10052, 'CAREER SUMMIT', '2025-10-01', '09:00:00', '16:00:00', 'late'),
-(261, 10052, 'GRADUATION BALL', '2025-10-10', '19:00:00', '23:00:00', 'absent'),
-(262, 10004, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(263, 20220824100110, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(264, 10010, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(265, 10008, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(266, 10007, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(267, 10005, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(268, 10003, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(269, 10009, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(270, 20220721155403, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(271, 202208244590, 'GENERAL ASSEMBLY', '2025-10-05', '08:00:00', '12:00:00', 'present'),
-(272, 20220725112458, 'SCC NIGHT', '2025-10-06', '10:04:00', '10:05:00', 'late'),
-(273, 10003, 'SCC NIGHT', '2025-10-06', '11:13:00', '11:13:00', 'late'),
-(274, 20220727113410, 'INTRAMURALS', '2025-10-06', '12:20:00', '12:21:00', 'present'),
-(275, 20220721155403, 'HALLOWEEN PARTY', '2025-10-08', '15:30:00', '15:30:00', 'present');
+INSERT INTO `attendance_report` (`attendance_id`, `student_id`, `event_name`, `date_time`, `time_in`, `time_out`, `remarks`) VALUES
+(51, 20220721155403, 'SCC night', '2025-11-22 16:37:00', '00:00:00', NULL, 'absent'),
+(107, 20220721155403, 'Bonga Festival', '2025-11-21 08:47:00', '00:00:00', NULL, 'absent'),
+(163, 20220721155403, 'Intramurals', '2025-11-22 08:46:00', '00:00:00', NULL, 'absent'),
+(219, 20220721155403, 'Student Assembly', '2025-11-23 08:46:00', '00:00:00', NULL, 'absent'),
+(225, 20220721155403, 'SEMINAR', '2025-11-24 11:44:13', '11:44:00', '11:44:00', 'present');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `events`
+--
+
+CREATE TABLE `events` (
+  `event_id` int NOT NULL,
+  `event_name` varchar(255) NOT NULL,
+  `event_date` datetime NOT NULL,
+  `event_type` varchar(100) NOT NULL,
+  `description` text,
+  `qr_code_data` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('Active','Completed','Cancelled') DEFAULT 'Active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `events`
+--
+
+INSERT INTO `events` (`event_id`, `event_name`, `event_date`, `event_type`, `description`, `qr_code_data`, `created_at`, `status`) VALUES
+(1, 'SCC night', '2025-11-22 16:37:00', 'PROGRAM', 'test', 'SIBONGA-SCC NIGHT-4:37:00 PM', '2025-11-22 08:37:36', 'Active'),
+(2, 'Student Assembly', '2025-11-23 08:46:00', 'All Year Level', 'test', 'SIBONGA-STUDENT ASSEMBLY-8:46:00 AM', '2025-11-24 00:46:21', 'Active'),
+(3, 'Intramurals', '2025-11-22 08:46:00', 'All Year Level', 'test', 'SIBONGA-INTRAMURALS-8:46:00 AM', '2025-11-24 00:46:47', 'Active'),
+(4, 'Bonga Festival', '2025-11-21 08:47:00', 'All Year Level', 'test', 'SIBONGA-BONGA FESTIVAL-8:47:00 AM', '2025-11-24 00:47:35', 'Active'),
+(5, 'Seminar', '2025-11-24 11:41:00', 'All Year Level', 'test', 'SIBONGA-SEMINAR-11:41:00 AM', '2025-11-24 03:42:04', 'Active');
 
 -- --------------------------------------------------------
 
@@ -469,6 +284,34 @@ INSERT INTO `student` (`user_id`, `student_id`, `first_name`, `middle_initial`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_archive`
+--
+
+CREATE TABLE `student_archive` (
+  `archive_id` int NOT NULL,
+  `student_id` bigint NOT NULL,
+  `archived_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `archive_reason` varchar(255) NOT NULL,
+  `archived_by` varchar(255) DEFAULT 'Admin',
+  `is_archived` tinyint(1) DEFAULT '1',
+  `restored_date` datetime DEFAULT NULL,
+  `restored_by` varchar(255) DEFAULT NULL,
+  `notes` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `student_archive`
+--
+
+INSERT INTO `student_archive` (`archive_id`, `student_id`, `archived_date`, `archive_reason`, `archived_by`, `is_archived`, `restored_date`, `restored_by`, `notes`) VALUES
+(1, 10003, '2025-11-25 07:37:53', 'Manual archive', 'Admin', 0, '2025-11-25 07:37:59', 'Admin', 'Archived from student management'),
+(3, 10004, '2025-11-24 08:34:16', 'Manual archive', 'Admin', 0, '2025-11-24 08:43:52', 'Admin', 'Archived from student management'),
+(4, 10005, '2025-11-24 08:43:24', 'Manual archive', 'Admin', 0, '2025-11-24 08:43:45', 'Admin', 'Archived from student management'),
+(9, 20220721155403, '2025-11-25 07:35:01', 'Manual archive', 'Admin', 0, '2025-11-25 07:36:26', 'Admin', 'Archived from student management');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -542,7 +385,7 @@ INSERT INTO `users` (`user_id`, `password`, `role`, `username`) VALUES
 (56, '$2y$10$smm3tB6OTasKHJPfnEfx8uxbJeV6yWF6IftOm5lGz50BEYs3Lsv.u', 'student', 10050),
 (57, '$2y$10$EQo7l1mG7aIE4Urd9zqf6eFWvlgEG3h5xs6DX9/zVuOlVvINU7/QW', 'student', 10051),
 (58, '$2y$10$J12Z/e4/9VAYCvgIMYmlteBBhbl1huJYYmFlu5p1GKuAVv7f7gsSm', 'student', 10052),
-(59, '$2y$10$6790bOyPU09IofXeY0lDPuvT0Lz.Basez25kNuSGxiHpNcct32Uy.', 'student', 20220721155403),
+(59, '$2y$10$pcbKQQo42FmDbNUTAH37EeQkD1lpFgFFX6XRrnN8yloiGVr.yBuHS', 'student', 20220721155403),
 (60, '$2y$10$7bvYsDRM3tbPpF1.Ulm/keCEgvFUAaN0akusdAOTaIN22tOOsx4Ri', 'student', 202208244590),
 (61, '$2y$10$uAJclzodfnEbxKqEzxdpz.Mcbeo6q1Vf2WxOo55X637AyZjwIOdFK', 'student', 20220824100110),
 (62, '$2y$10$WPQzF.gbYzgrB7T6tECAE.Mq1d5.k36.wd/mkwC92qKLEkQ80mGE.', 'student', 20220725125037),
@@ -564,11 +407,29 @@ ALTER TABLE `admin`
   ADD KEY `FK_user_TO_admin` (`user_id`);
 
 --
+-- Indexes for table `archive_history`
+--
+ALTER TABLE `archive_history`
+  ADD PRIMARY KEY (`history_id`),
+  ADD KEY `idx_student_id` (`student_id`),
+  ADD KEY `idx_action_date` (`action_date`),
+  ADD KEY `idx_action` (`action`);
+
+--
 -- Indexes for table `attendance_report`
 --
 ALTER TABLE `attendance_report`
   ADD PRIMARY KEY (`attendance_id`),
   ADD KEY `FK_student_TO_attendance` (`student_id`);
+
+--
+-- Indexes for table `events`
+--
+ALTER TABLE `events`
+  ADD PRIMARY KEY (`event_id`),
+  ADD KEY `idx_event_date` (`event_date`),
+  ADD KEY `idx_event_type` (`event_type`),
+  ADD KEY `idx_status` (`status`);
 
 --
 -- Indexes for table `instructor`
@@ -590,6 +451,15 @@ ALTER TABLE `student`
   ADD KEY `FK_user_TO_student` (`user_id`);
 
 --
+-- Indexes for table `student_archive`
+--
+ALTER TABLE `student_archive`
+  ADD PRIMARY KEY (`archive_id`),
+  ADD UNIQUE KEY `unique_student_archive` (`student_id`),
+  ADD KEY `idx_archived_date` (`archived_date`),
+  ADD KEY `idx_is_archived` (`is_archived`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -607,10 +477,28 @@ ALTER TABLE `admin`
   MODIFY `admin_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `archive_history`
+--
+ALTER TABLE `archive_history`
+  MODIFY `history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
 -- AUTO_INCREMENT for table `attendance_report`
 --
 ALTER TABLE `attendance_report`
-  MODIFY `attendance_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=276;
+  MODIFY `attendance_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=281;
+
+--
+-- AUTO_INCREMENT for table `events`
+--
+ALTER TABLE `events`
+  MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `student_archive`
+--
+ALTER TABLE `student_archive`
+  MODIFY `archive_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -627,6 +515,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `admin`
   ADD CONSTRAINT `FK_user_TO_admin` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `archive_history`
+--
+ALTER TABLE `archive_history`
+  ADD CONSTRAINT `FK_student_TO_history` FOREIGN KEY (`student_id`) REFERENCES `student` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `attendance_report`
@@ -651,6 +545,12 @@ ALTER TABLE `secret_question`
 --
 ALTER TABLE `student`
   ADD CONSTRAINT `FK_user_TO_student` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `student_archive`
+--
+ALTER TABLE `student_archive`
+  ADD CONSTRAINT `FK_student_TO_archive` FOREIGN KEY (`student_id`) REFERENCES `student` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

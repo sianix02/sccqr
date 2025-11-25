@@ -1,19 +1,20 @@
 <?php
+// File: C:\laragon\www\sccqr\api\export_individual_student_pdf.php
 session_start();
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-if (!isset($_SESSION['session_id']) || !isset($_SESSION['student_id'])) {
+if (!isset($_SESSION['session_id'])) {
     die('Unauthorized access');
 }
 
-if (!file_exists('connection.php')) {
+if (!file_exists('../sql_php/connection.php')) {
     die('Database configuration not found');
 }
 
-require_once 'connection.php';
+require_once '../sql_php/connection.php';
 
 // Define base paths
 define('BASE_PATH', dirname(__DIR__));
@@ -31,8 +32,12 @@ if (!isset($conn) || $conn->connect_error) {
     die('Database connection failed');
 }
 
-$student_id = (int)$_SESSION['student_id'];
-$filter_status = isset($_GET['filter']) ? trim(strtolower($_GET['filter'])) : '';
+// Get student ID from URL
+$student_id = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
+
+if (!$student_id) {
+    die('Invalid student ID');
+}
 
 try {
     // Get student info
@@ -56,7 +61,7 @@ try {
     $student = $student_result->fetch_assoc();
     $student_stmt->close();
 
-    // Get ONLY actual attendance records
+    // Get attendance records
     $attendance_query = "
         SELECT 
             ar.event_name,
@@ -69,31 +74,11 @@ try {
         FROM attendance_report ar
         LEFT JOIN events e ON ar.event_name = e.event_name
         WHERE ar.student_id = ?
+        ORDER BY ar.date_time DESC
     ";
 
-    // Add status filter if provided
-    $use_status_param = false;
-    if ($filter_status && in_array($filter_status, ['present', 'late', 'absent', 'pending'])) {
-        if ($filter_status === 'pending') {
-            $attendance_query .= " AND ar.time_out IS NULL AND ar.time_in IS NOT NULL AND ar.time_in != '00:00:00'";
-        } elseif ($filter_status === 'absent') {
-            $attendance_query .= " AND (ar.remarks = 'absent' OR (ar.time_in = '00:00:00' AND ar.time_out = '00:00:00'))";
-        } else {
-            $attendance_query .= " AND ar.remarks = ?";
-            $use_status_param = true;
-        }
-    }
-
-    $attendance_query .= " ORDER BY ar.date_time DESC";
-
     $attendance_stmt = $conn->prepare($attendance_query);
-
-    if ($use_status_param) {
-        $attendance_stmt->bind_param("is", $student_id, $filter_status);
-    } else {
-        $attendance_stmt->bind_param("i", $student_id);
-    }
-
+    $attendance_stmt->bind_param("i", $student_id);
     $attendance_stmt->execute();
     $attendance_result = $attendance_stmt->get_result();
     $records = [];
@@ -102,7 +87,6 @@ try {
         $records[] = $row;
     }
     $attendance_stmt->close();
-    $conn->close();
 
     // Process records
     $table_rows = [];
@@ -111,7 +95,7 @@ try {
     $late_count = 0;
     $absent_count = 0;
     
-    // Map for status descriptions
+    // Status descriptions
     $status_descriptions = [
         'present' => 'Completed Attendance',
         'late' => 'Arrive 30+ minutes late',
@@ -127,7 +111,7 @@ try {
         $date_time = new DateTime($record['date_time']);
         $date_formatted = $date_time->format('m/d/Y');
         
-        // Format times
+        // Handle time_in for absent students
         $time_in = 'N/A';
         if ($record['time_in'] && $record['time_in'] !== '00:00:00') {
             $time_in_obj = DateTime::createFromFormat('H:i:s', $record['time_in']);
@@ -146,9 +130,11 @@ try {
             $status = 'ABSENT';
             $remarks = 'Absent';
             $status_description = $status_descriptions['absent'];
+            $time_in = 'N/A';
+            $time_out = 'N/A';
             $absent_count++;
         }
-        // CHECK IF HAS TIME OUT (actual time out, not 00:00:00)
+        // CHECK IF HAS TIME OUT
         elseif ($record['time_out'] && $record['time_out'] !== '00:00:00') {
             $time_out_obj = DateTime::createFromFormat('H:i:s', $record['time_out']);
             if ($time_out_obj) {
@@ -168,6 +154,8 @@ try {
                 $status = 'ABSENT';
                 $remarks = 'Absent';
                 $status_description = $status_descriptions['absent'];
+                $time_in = 'N/A';
+                $time_out = 'N/A';
                 $absent_count++;
             }
         }
@@ -189,13 +177,38 @@ try {
     $attended = $present_count + $late_count;
     $attendance_rate = $total > 0 ? round(($attended / $total) * 100, 1) : 0;
 
-    // ===== CREATE PDF USING FPDF =====
+    // ============================================
+    // FIXED: Check archive status AFTER counting absences
+    // ============================================
+    $student_archive_query = "SELECT is_archived FROM student_archive WHERE student_id = ? LIMIT 1";
+    $archive_stmt = $conn->prepare($student_archive_query);
+    $archive_stmt->bind_param("i", $student_id);
+    $archive_stmt->execute();
+    $archive_result = $archive_stmt->get_result();
+    $is_manually_archived = false;
+
+    if ($archive_result->num_rows > 0) {
+        $archive_row = $archive_result->fetch_assoc();
+        $is_manually_archived = (int)$archive_row['is_archived'] === 1;
+    }
+    $archive_stmt->close();
+    $conn->close();
+
+    // Determine student status: Manual archive OR 4+ absences = Inactive
+    $student_status = ($is_manually_archived || $absent_count >= 4) ? 'Inactive' : 'Active';
+    $status_reason = '';
+    if ($is_manually_archived) {
+        $status_reason = ' (Manually Archived)';
+    } elseif ($absent_count >= 4) {
+        $status_reason = ' (4+ Absences)';
+    }
+
+    // ===== CREATE PDF =====
     class PDF extends FPDF {
         private $schoolName = 'Sibonga Community College';
-        private $reportTitle = 'EXTRACURRICULAR ACTIVITIES ATTENDANCE REPORT';
+        private $reportTitle = 'INDIVIDUAL STUDENT ATTENDANCE REPORT';
         private $subtitle = 'Poblacion, Sibonga, Cebu 6020';
         
-        // Function to convert interlaced PNG to non-interlaced
         private function convertInterlacedPNG($imagePath) {
             if (!extension_loaded('gd')) {
                 return $imagePath;
@@ -225,8 +238,6 @@ try {
                 } catch (Exception $e) {
                     error_log('Logo 1 error: ' . $e->getMessage());
                 }
-            } else {
-                error_log('Logo 1 not found at: ' . $logo1);
             }
             
             if (file_exists($logo2)) {
@@ -240,8 +251,6 @@ try {
                 } catch (Exception $e) {
                     error_log('Logo 2 error: ' . $e->getMessage());
                 }
-            } else {
-                error_log('Logo 2 not found at: ' . $logo2);
             }
             
             $this->SetFont('Arial', 'B', 14);
@@ -266,7 +275,6 @@ try {
             $this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
         }
         
-        // Updated table with status badges - REMARKS AND STATUS COLORED
         function AttendanceTable($header, $data, $widths) {
             // Header styling
             $this->SetFillColor(0, 102, 204);
@@ -275,7 +283,6 @@ try {
             $this->SetLineWidth(.3);
             $this->SetFont('', 'B', 9);
             
-            // Header row
             for($i = 0; $i < count($header); $i++) {
                 $this->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
             }
@@ -286,7 +293,6 @@ try {
             $this->SetTextColor(0);
             $this->SetFont('', '', 8);
             
-            // Data rows
             $fill = false;
             foreach($data as $row) {
                 $this->Cell($widths[0], 8, $row['date'], 'LRB', 0, 'C', $fill);
@@ -294,31 +300,29 @@ try {
                 $this->Cell($widths[2], 8, $row['time_in'], 'LRB', 0, 'C', $fill);
                 $this->Cell($widths[3], 8, $row['time_out'], 'LRB', 0, 'C', $fill);
                 
-                // DETERMINE COLOR BASED ON REMARKS
+                // Color based on remarks
                 $status = strtoupper($row['remarks']);
                 if ($status === 'PRESENT') {
-                    $bgColor = [40, 167, 69]; // Green RGB
-                    $textColor = 255; // White text
+                    $bgColor = [40, 167, 69];
+                    $textColor = 255;
                 } elseif ($status === 'LATE') {
-                    $bgColor = [255, 193, 7]; // Yellow RGB
-                    $textColor = 0; // Black text
+                    $bgColor = [255, 193, 7];
+                    $textColor = 0;
                 } elseif ($status === 'ABSENT') {
-                    $bgColor = [220, 53, 69]; // Red RGB
-                    $textColor = 255; // White text
+                    $bgColor = [220, 53, 69];
+                    $textColor = 255;
                 } else {
-                    $bgColor = [108, 117, 125]; // Gray RGB
-                    $textColor = 255; // White text
+                    $bgColor = [108, 117, 125];
+                    $textColor = 255;
                 }
                 
-                // APPLY COLOR TO REMARKS CELL ONLY
                 $this->SetFillColor($bgColor[0], $bgColor[1], $bgColor[2]);
                 $this->SetTextColor($textColor);
                 $this->SetFont('', 'B', 8);
                 $this->Cell($widths[4], 8, $status, 'LRB', 0, 'C', true);
                 
-                // STATUS CELL - WHITE/NORMAL (NO COLOR)
-                $this->SetFillColor(255, 255, 255); // White background
-                $this->SetTextColor(0); // Black text
+                $this->SetFillColor(255, 255, 255);
+                $this->SetTextColor(0);
                 $this->SetFont('', '', 8);
                 $this->Cell($widths[5], 8, substr($row['status_description'], 0, 30), 'LRB', 0, 'L', true);
                 
@@ -326,7 +330,6 @@ try {
                 $fill = !$fill;
             }
             
-            // Closing line
             $this->Cell(array_sum($widths), 0, '', 'T');
         }
         
@@ -338,14 +341,13 @@ try {
         }
     }
 
-    // Create PDF
     $pdf = new PDF();
     $pdf->AliasNbPages();
     $pdf->SetMargins(10, 10, 10);
     $pdf->SetAutoPageBreak(true, 20);
     $pdf->AddPage();
     
-    // Student Information Box
+    // Student Information
     $pdf->SetFont('Arial', 'B', 10);
     $pdf->SetFillColor(240, 248, 255);
     $pdf->Cell(0, 6, 'STUDENT INFORMATION', 1, 1, 'L', true);
@@ -355,12 +357,8 @@ try {
     $pdf->InfoBox('Year & Set:', $student['year_level'] . ' - ' . $student['student_set']);
     $pdf->InfoBox('Course:', $student['course']);
     $pdf->InfoBox('Sex:', $student['sex']);
+    $pdf->InfoBox('Status:', $student_status . $status_reason);
     $pdf->InfoBox('Report Date:', date('F d, Y g:i A'));
-    
-    if ($filter_status) {
-        $pdf->SetFillColor(255, 243, 205);
-        $pdf->InfoBox('Filter Applied:', ucfirst($filter_status) . ' Status');
-    }
     
     $pdf->Ln(5);
     
@@ -395,11 +393,9 @@ try {
     
     $pdf->Ln(2);
     
-    // Updated table headers
-    $header = array('Date', 'Event', 'Time In', 'Time Out', 'Status', 'Remarks');
+    $header = array('Date', 'Event', 'Time In', 'Time Out', 'Remarks', 'Status');
     $widths = array(22, 40, 22, 22, 30, 54);
     
-    // Prepare data
     $data = [];
     if (count($table_rows) === 0) {
         $data[] = [
@@ -419,10 +415,10 @@ try {
     // Footer note
     $pdf->Ln(5);
     $pdf->SetFont('Arial', 'I', 8);
-    $pdf->MultiCell(0, 4, 'This is an official attendance report generated on ' . date('F d, Y \a\t g:i A') . '. For inquiries, please contact the Student Community Center (SCC) Office.', 0, 'C');
+    $pdf->MultiCell(0, 4, 'This is an official attendance report generated on ' . date('F d, Y \a\t g:i A') . '. Students with 4 or more absences are automatically marked as Inactive. For inquiries, please contact the Student Community Center (SCC) Office.', 0, 'C');
     
-    // Output PDF
-    $filename = 'Attendance_Report_' . str_replace(' ', '_', $student['first_name'] . '_' . $student['last_name']) . '_' . date('Y-m-d-Hi') . '.pdf';
+    // Output
+    $filename = 'Student_' . str_replace(' ', '_', $student['first_name'] . '_' . $student['last_name']) . '_Report_' . date('Y-m-d') . '.pdf';
     $pdf->Output('D', $filename);
     exit;
 
@@ -432,6 +428,6 @@ try {
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
-    ], JSON_PRETTY_PRINT);
+    ]);
 }
 ?>

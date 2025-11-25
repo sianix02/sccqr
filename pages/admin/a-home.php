@@ -65,7 +65,9 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         <?php include 'admin_change_password_modal.php'; ?>
     </main>
 
-    <script src="../../script/admin-home.js"></script>
+
+    <script src="../../script/admin-home-core.js"></script>
+    <script src="../../script/admin-home-students.js"></script>
     <script src="../../script/admin_profile_handler.js"></script>
     <script src="../../script/admin_password_handler.js"></script>
 

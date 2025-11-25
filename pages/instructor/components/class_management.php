@@ -27,6 +27,44 @@
                 <button class="btn btn-secondary" id="class-refresh-students">↻ Refresh</button>
             </div>
         </div>
+        
+        <!-- Enhanced Filters -->
+        <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; padding-top: 15px; border-top: 1px solid #e0e0e0; align-items: center;">
+            <span style="font-weight: 600; color: #666; font-size: 14px;">🔍 Filters:</span>
+            
+            <!-- Status Filter -->
+            <select id="class-filter-status" 
+                    style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                <option value="all">All Students</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+            </select>
+            
+            <!-- Event Filter -->
+            <select id="class-filter-event" 
+                    style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                <option value="all">All Events</option>
+            </select>
+            
+            <!-- Date Filter -->
+            <select id="class-filter-date" 
+                    style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                <option value="all">All Dates</option>
+            </select>
+            
+            <!-- Set Filter -->
+            <select id="class-filter-set" 
+                    style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                <option value="">All Sets</option>
+            </select>
+            
+            <!-- Clear Filters Button -->
+            <button id="class-clear-filters" class="btn-secondary" style="padding: 8px 16px; font-size: 13px; display: none;">
+                Clear Filters
+            </button>
+            
+            <span id="class-filter-info" style="font-size: 12px; color: #666; margin-left: auto;"></span>
+        </div>
     </div>
     
     <!-- Students Statistics -->
@@ -40,7 +78,7 @@
             <div class="stat-label">Active Students</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" id="class-avg-attendance">0%</div>
+            <div class="stat-number" id="class-avg-attendance">0 events</div>
             <div class="stat-label">Avg. Attendance</div>
         </div>
     </div>
@@ -55,15 +93,15 @@
         <div class="table-container">
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
-                    <tr style="background-color: var(--light-blue-bg);">
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Student ID</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Name</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Set</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Year Level</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Course</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Attendance</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Status</th>
-                        <th style="padding: 12px; text-align: center; color: var(--dark-blue);">Actions</th>
+                    <tr style="background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue)); color: white;">
+                        <th style="padding: 12px; text-align: left;">Student ID</th>
+                        <th style="padding: 12px; text-align: left;">Name</th>
+                        <th style="padding: 12px; text-align: left;">Set</th>
+                        <th style="padding: 12px; text-align: left;">Year Level</th>
+                        <th style="padding: 12px; text-align: left;">Course</th>
+                        <th style="padding: 12px; text-align: left;">Attendance</th>
+                        <th style="padding: 12px; text-align: left;">Status</th>
+                        <th style="padding: 12px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="class-students-table-body">
@@ -80,7 +118,7 @@
 
 <!-- Student Details Modal -->
 <div id="class-student-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
-    <div style="background: white; max-width: 800px; margin: 50px auto; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div style="background: white; max-width: 900px; margin: 50px auto; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <h2 style="color: var(--dark-blue); margin: 0;">Student Information & Attendance Report</h2>
             <button id="class-close-details-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
@@ -132,13 +170,14 @@
                     <tr style="background-color: var(--light-blue-bg);">
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Date</th>
                         <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Event Name</th>
-                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Time Scanned</th>
+                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Time In</th>
+                        <th style="padding: 12px; text-align: left; color: var(--dark-blue);">Time Out</th>
                         <th style="padding: 12px; text-align: center; color: var(--dark-blue);">Status</th>
                     </tr>
                 </thead>
                 <tbody id="class-attendance-history-body">
                     <tr>
-                        <td colspan="4" style="padding: 20px; text-align: center; color: #666;">
+                        <td colspan="5" style="padding: 20px; text-align: center; color: #666;">
                             No attendance records found
                         </td>
                     </tr>
@@ -147,7 +186,7 @@
         </div>
         
         <div style="margin-top: 20px; display: flex; gap: 10px;">
-            <button class="btn" id="class-export-student-report">Export Report</button>
+            <button class="btn" id="class-export-student-report">📄 Export Report</button>
             <button class="btn btn-secondary" id="class-close-details-btn">Close</button>
         </div>
     </div>

@@ -26,7 +26,7 @@
                     <option value="Second">For Second Year</option>
                     <option value="Third">For Third Year</option>
                     <option value="Fourth">For Fourth Year</option>
-                    <option value="PROGRAM">Program</option>
+                    <option value="All Year Level">All Year Level</option>
                 </select>
             </div>
             

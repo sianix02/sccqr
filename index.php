@@ -2,6 +2,8 @@
 include "sql_php/connection.php";
 session_start();
 
+include_once __DIR__ . '/api/auto_mark_absent.php';
+
 if(isset($_POST['btn'])){
 
     $textid = $_POST['id'];
@@ -73,7 +75,6 @@ if(isset($_POST['btn'])){
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,7 +101,12 @@ if(isset($_POST['btn'])){
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <button type="button" class="toggle-password" id="togglePassword">
+                        <span class="eye-icon">⦸</span>
+                    </button>
+                </div>
             </div>
             <button type="submit" class="login-button" name="btn">Login</button>
             <?php if(isset($notice)): ?>
@@ -116,5 +122,21 @@ if(isset($_POST['btn'])){
             Sibonga Community College@2008
         </div>
     </div>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Toggle the type attribute
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle the icon
+            this.querySelector('.eye-icon').textContent = type === 'password' ? '⦸' : '👁';
+        });
+    </script>
 </body>
 </html>
