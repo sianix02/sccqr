@@ -17,9 +17,10 @@ try {
     
     $studentId = $data['student_id'];
     $firstName = $data['first_name'];
+    $middleInitial = isset($data['middle_initial']) ? $data['middle_initial'] : '';
     $lastName = $data['last_name'];
     $yearLevel = $data['year_level'];
-    $sex = isset($data['sex']) ? $data['sex'] : '';
+    $sex = isset($data['sex']) ? $data['sex'] : 'Not Specified';
     $studentSet = isset($data['student_set']) ? $data['student_set'] : '';
     $course = isset($data['course']) ? $data['course'] : '';
     $isUpdate = isset($data['is_update']) ? $data['is_update'] : false;
@@ -28,6 +29,7 @@ try {
         // Update existing student
         $sql = "UPDATE student 
                 SET first_name = ?, 
+                    middle_initial = ?,
                     last_name = ?, 
                     year_level = ?,
                     sex = ?,
@@ -36,7 +38,7 @@ try {
                 WHERE student_id = ?";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('ssssssi', $firstName, $lastName, $yearLevel, $sex, $studentSet, $course, $studentId);
+        $stmt->bind_param('sssssssi', $firstName, $middleInitial, $lastName, $yearLevel, $sex, $studentSet, $course, $studentId);
         
         if ($stmt->execute()) {
             echo json_encode([
@@ -64,11 +66,11 @@ try {
         
         // Insert new student
         $sql = "INSERT INTO student 
-                (student_id, first_name, last_name, year_level, sex, student_set, course) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
+                (student_id, first_name, middle_initial, last_name, year_level, sex, student_set, course) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('issssss', $studentId, $firstName, $lastName, $yearLevel, $sex, $studentSet, $course);
+        $stmt->bind_param('isssssss', $studentId, $firstName, $middleInitial, $lastName, $yearLevel, $sex, $studentSet, $course);
         
         if ($stmt->execute()) {
             echo json_encode([

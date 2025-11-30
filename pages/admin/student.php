@@ -132,10 +132,20 @@
             </div>
             
             <div class="form-group">
-                <label for="student-name">Full Name</label>
-                <input type="text" id="student-name" placeholder="Enter full name" required>
+                <label for="student-first-name">First Name</label>
+                <input type="text" id="student-first-name" placeholder="Enter first name" required>
             </div>
-            
+
+            <div class="form-group">
+                <label for="student-middle-initial">Middle Initial (Optional)</label>
+                <input type="text" id="student-middle-initial" placeholder="e.g., M" maxlength="1" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="student-last-name">Last Name</label>
+                <input type="text" id="student-last-name" placeholder="Enter last name" required>
+            </div>
+                        
             <div class="form-group">
                 <label for="student-course">Course</label>
                 <input type="text" id="student-course" placeholder="e.g., BSIT, BSBA" required>

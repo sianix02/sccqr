@@ -534,7 +534,9 @@ function openStudentModal(student = null) {
         
         const idHidden = document.getElementById('student-id-hidden');
         const idInput = document.getElementById('student-id-input');
-        const nameInput = document.getElementById('student-name');
+        const firstNameInput = document.getElementById('student-first-name');
+        const middleInitialInput = document.getElementById('student-middle-initial');
+        const lastNameInput = document.getElementById('student-last-name');
         const courseInput = document.getElementById('student-course');
         const setInput = document.getElementById('student-set');
         const yearInput = document.getElementById('student-year');
@@ -544,7 +546,9 @@ function openStudentModal(student = null) {
             idInput.value = student.id;
             idInput.disabled = true;
         }
-        if (nameInput) nameInput.value = student.name;
+        if (firstNameInput) firstNameInput.value = student.first_name || '';
+        if (middleInitialInput) middleInitialInput.value = student.middle_initial || '';
+        if (lastNameInput) lastNameInput.value = student.last_name || '';
         if (courseInput) courseInput.value = student.course;
         if (setInput) setInput.value = student.set;
         if (yearInput) yearInput.value = student.year;
@@ -573,32 +577,36 @@ function closeStudentModal() {
 
 async function saveStudent() {
     const idInput = document.getElementById('student-id-input');
-    const nameInput = document.getElementById('student-name');
+    const firstNameInput = document.getElementById('student-first-name');
+    const middleInitialInput = document.getElementById('student-middle-initial');
+    const lastNameInput = document.getElementById('student-last-name');
     const courseInput = document.getElementById('student-course');
     const setInput = document.getElementById('student-set');
     const yearInput = document.getElementById('student-year');
     
-    if (!idInput || !nameInput || !courseInput || !yearInput) {
+    if (!idInput || !firstNameInput || !lastNameInput || !courseInput || !yearInput) {
         showToast('Form elements not found', 'error');
         return;
     }
     
     const id = idInput.value.trim();
-    const name = nameInput.value.trim();
+    const firstName = firstNameInput.value.trim();
+    const middleInitial = middleInitialInput ? middleInitialInput.value.trim().toUpperCase() : '';
+    const lastName = lastNameInput.value.trim();
     const course = courseInput.value.trim();
     const studentSet = setInput ? setInput.value.trim() : '';
     const year = yearInput.value;
     
-    if (!id || !name || !course || !year) {
+    if (!id || !firstName || !lastName || !course || !year) {
         showToast('Please fill in all required fields', 'error');
         return;
     }
     
-    const nameParts = name.split(' ');
     const studentData = {
         student_id: id,
-        first_name: nameParts[0],
-        last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : '',
+        first_name: firstName,
+        middle_initial: middleInitial,
+        last_name: lastName,
         year_level: year,
         sex: 'Not Specified',
         student_set: studentSet,
