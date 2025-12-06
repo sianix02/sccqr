@@ -31,6 +31,12 @@
             </button>
         </li>
         <li class="nav-item">
+            <button class="nav-button" data-page="event-history">
+                <span class="nav-icon">📅</span>
+                Event History
+            </button>
+        </li>
+        <li class="nav-item">
             <button class="nav-button" data-page="students">
                 <span class="nav-icon">👥</span>
                 Students

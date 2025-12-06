@@ -1,7 +1,7 @@
 // ============================================================
 // INSTRUCTOR DASHBOARD - CLASS MANAGEMENT ONLY VERSION
 // File: instructor.js
-// Updated to remove Live Attendance
+// Updated filter labels: Present/Absent
 // ============================================================
 
 // ============================================================
@@ -9,7 +9,7 @@
 // ============================================================
 class Dashboard {
     constructor() {
-        this.currentPage = 'class-management'; // Changed from 'live-attendance'
+        this.currentPage = 'class-management';
         this.init();
     }
 
@@ -151,7 +151,7 @@ class Dashboard {
 }
 
 // ============================================================
-// CLASS MANAGEMENT MODULE - ENHANCED WITH FILTERS
+// CLASS MANAGEMENT MODULE - UPDATED FILTER LOGIC
 // ============================================================
 class ClassManagement {
     constructor(dashboard) {
@@ -192,7 +192,7 @@ class ClassManagement {
             });
         }
 
-        // NEW FILTERS
+        // NEW FILTERS - UPDATED FOR PRESENT/ABSENT
         const statusFilter = document.getElementById('class-filter-status');
         if (statusFilter) {
             statusFilter.addEventListener('change', () => {
@@ -416,9 +416,20 @@ class ClassManagement {
                 student.name.toLowerCase().includes(searchTerm) ||
                 student.set.toLowerCase().includes(searchTerm);
             
-            // Status filter
-            const matchesStatus = statusFilter === 'all' || 
-                student.status.toLowerCase() === statusFilter;
+            // Status filter - UPDATED LOGIC FOR PRESENT/ABSENT
+            let matchesStatus = true;
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'present') {
+                    // Present = has at least one attendance record with status "Present"
+                    matchesStatus = student.attendance && 
+                                  student.attendance.some(att => att.status === 'Present');
+                } else if (statusFilter === 'absent') {
+                    // Absent = has no "Present" attendance OR has "Absent" records
+                    matchesStatus = !student.attendance || 
+                                  student.attendance.length === 0 ||
+                                  student.attendance.every(att => att.status !== 'Present');
+                }
+            }
             
             // Set filter
             const matchesSet = !setFilter || student.set === setFilter;
@@ -521,7 +532,11 @@ class ClassManagement {
     updateStats() {
         const displayData = this.filteredData.length > 0 ? this.filteredData : this.studentsData;
         const totalStudents = displayData.length;
-        const activeStudents = displayData.filter(s => s.status === 'Active').length;
+        
+        // Count students with at least one "Present" attendance
+        const presentStudents = displayData.filter(s => 
+            s.attendance && s.attendance.some(att => att.status === 'Present')
+        ).length;
         
         let totalAttendanceEvents = 0;
         displayData.forEach(student => {
@@ -535,7 +550,7 @@ class ClassManagement {
         const avgEl = document.getElementById('class-avg-attendance');
         
         if (totalEl) totalEl.textContent = totalStudents;
-        if (activeEl) activeEl.textContent = activeStudents;
+        if (activeEl) activeEl.textContent = presentStudents;
         if (avgEl) avgEl.textContent = avgAttendance;
     }
 

@@ -32,12 +32,12 @@
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; padding-top: 15px; border-top: 1px solid #e0e0e0; align-items: center;">
             <span style="font-weight: 600; color: #666; font-size: 14px;">🔍 Filters:</span>
             
-            <!-- Status Filter -->
+            <!-- Status Filter - UPDATED LABELS -->
             <select id="class-filter-status" 
                     style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
                 <option value="all">All Students</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
             </select>
             
             <!-- Event Filter -->
@@ -75,7 +75,7 @@
         </div>
         <div class="stat-card">
             <div class="stat-number" id="class-active-students-count">0</div>
-            <div class="stat-label">Active Students</div>
+            <div class="stat-label">Present Students</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="class-avg-attendance">0 events</div>

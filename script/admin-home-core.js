@@ -1,6 +1,6 @@
 // ============================================================
-// ADMIN-HOME-CORE.JS - Core Utilities & Analytics
-// Part 1: Global utilities, navigation, charts, and events
+// ADMIN-HOME-CORE.JS - Core Utilities & Non-Analytics Features
+// Part 1: Global utilities, navigation, events, and logout
 // ============================================================
 
 // ============================================================
@@ -111,19 +111,21 @@ function exportToPDF(data, filename, title = 'Report') {
     showToast('Data exported successfully!', 'success');
 }
 
+// Make exportToPDF available globally
+window.exportToPDF = exportToPDF;
+
 // ============================================================
 // MAIN INITIALIZATION
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing Admin Dashboard...');
+    console.log('🚀 Initializing Admin Dashboard Core...');
     
     initializeNavigation();
-    initializeChart();
     initializeEventManagement();
     initializeLogout();
     
-    console.log('✅ Admin Dashboard initialized successfully');
+    console.log('✅ Admin Dashboard Core initialized successfully');
 });
 
 // ============================================================
@@ -195,288 +197,6 @@ function initializeNavigation() {
             closeMobileSidebar();
         }
     });
-}
-
-// ============================================================
-// CHART MODULE
-// ============================================================
-
-let courseChart = null;
-let analyticsData = null;
-
-function initializeChart() {
-    loadAnalyticsData();
-    
-    const timeRangeEl = document.getElementById('timeRange');
-    if (timeRangeEl) {
-        timeRangeEl.addEventListener('change', () => {
-            updateChartTimeRange();
-        });
-    }
-    
-    const refreshChartBtn = document.getElementById('refreshChart');
-    if (refreshChartBtn) {
-        refreshChartBtn.addEventListener('click', () => {
-            loadAnalyticsData();
-            showToast('Refreshing analytics data...', 'success');
-        });
-    }
-}
-
-async function loadAnalyticsData() {
-    const canvas = document.getElementById('courseAttendanceChart');
-    if (!canvas) {
-        console.error('Canvas element not found');
-        return;
-    }
-    
-    console.log('Loading analytics data...');
-    showChartLoading(true);
-    
-    try {
-        const response = await fetch('../../api/get_analytics_data.php');
-        console.log('Response status:', response.status);
-        
-        const result = await response.json();
-        console.log('API Result:', result);
-        
-        if (result.success) {
-            analyticsData = result;
-            updateDashboardStats(result.stats);
-            renderCourseChart(result.chartData);
-        } else {
-            throw new Error(result.error || 'Failed to load analytics');
-        }
-    } catch (error) {
-        console.error('Error loading analytics:', error);
-        showChartError(error.message);
-        showToast('Failed to load analytics data', 'error');
-    } finally {
-        showChartLoading(false);
-    }
-}
-
-function updateDashboardStats(stats) {
-    const statElements = {
-        'stat-total-students': stats.total_students || 0,
-        'stat-total-instructors': stats.total_instructors || 0,
-        'stat-total-events': stats.total_events || 0,
-        'stat-engagement-rate': (stats.engagement_rate || 0) + '%'
-    };
-    
-    Object.keys(statElements).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.textContent = statElements[id];
-        }
-    });
-}
-
-function renderCourseChart(chartData) {
-    const canvas = document.getElementById('courseAttendanceChart');
-    if (!canvas) {
-        console.error('Canvas not found');
-        return;
-    }
-    
-    console.log('Chart Data Received:', chartData);
-    
-    if (courseChart) {
-        courseChart.destroy();
-        courseChart = null;
-    }
-    
-    if (!chartData.labels || chartData.labels.length === 0) {
-        console.log('No data - showing empty state');
-        showChartEmpty();
-        return;
-    }
-    
-    console.log('Labels:', chartData.labels);
-    console.log('Datasets:', chartData.datasets);
-    
-    const colors = [
-        '#0066cc', '#28a745', '#ffc107', '#dc3545', '#17a2b8',
-        '#6f42c1', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
-    ];
-    
-    const datasets = Object.keys(chartData.datasets).map((course, index) => {
-        const color = colors[index % colors.length];
-        const data = chartData.datasets[course];
-        
-        console.log(`Course: ${course}, Data:`, data);
-        
-        return {
-            label: course || 'Unknown Course',
-            data: data,
-            borderColor: color,
-            backgroundColor: hexToRgba(color, 0.1),
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            pointBackgroundColor: color,
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointHoverBorderWidth: 3
-        };
-    });
-    
-    console.log('Final datasets for Chart.js:', datasets);
-    
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded!');
-        showChartError('Chart.js library not loaded');
-        return;
-    }
-    
-    try {
-        const ctx = canvas.getContext('2d');
-        
-        courseChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartData.labels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'start',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15,
-                            font: { size: 12, weight: '600' }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        padding: 12,
-                        callbacks: {
-                            label: (context) => {
-                                return `${context.dataset.label}: ${context.parsed.y} attendees`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Time Period',
-                            font: { size: 13, weight: '600' }
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        display: true,
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Attendees',
-                            font: { size: 13, weight: '600' }
-                        },
-                        ticks: {
-                            stepSize: 1,
-                            callback: (value) => Number.isInteger(value) ? value : null
-                        }
-                    }
-                }
-            }
-        });
-        
-        console.log('Chart created successfully:', courseChart);
-        
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        showChartError(error.message);
-    }
-}
-
-function updateChartTimeRange() {
-    if (!analyticsData) return;
-    
-    const timeRangeEl = document.getElementById('timeRange');
-    if (!timeRangeEl) return;
-    
-    const months = parseInt(timeRangeEl.value);
-    
-    showToast(`Updating chart for last ${months} months...`, 'success');
-    
-    loadAnalyticsData();
-}
-
-function showChartLoading(show) {
-    const container = document.querySelector('.chart-container');
-    if (!container) return;
-    
-    let canvas = document.getElementById('courseAttendanceChart');
-    let loadingDiv = container.querySelector('.chart-loading');
-    
-    if (show) {
-        if (canvas) canvas.style.display = 'none';
-        if (!loadingDiv) {
-            loadingDiv = document.createElement('div');
-            loadingDiv.className = 'chart-loading';
-            loadingDiv.innerHTML = `
-                <div class="chart-loading-spinner"></div>
-                <div class="chart-loading-text">Loading analytics data...</div>
-            `;
-            container.appendChild(loadingDiv);
-        }
-        loadingDiv.style.display = 'block';
-    } else {
-        if (loadingDiv) loadingDiv.style.display = 'none';
-        if (!canvas) {
-            canvas = document.createElement('canvas');
-            canvas.id = 'courseAttendanceChart';
-            container.appendChild(canvas);
-        }
-        canvas.style.display = 'block';
-    }
-}
-
-function showChartEmpty() {
-    const container = document.querySelector('.chart-container');
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="chart-empty">
-            <div class="chart-empty-icon">📊</div>
-            <div class="chart-empty-text">No attendance data available</div>
-            <div class="chart-empty-subtext">Data will appear here once students start attending events</div>
-        </div>
-    `;
-}
-
-function showChartError(message) {
-    const container = document.querySelector('.chart-container');
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="chart-empty">
-            <div class="chart-empty-icon" style="color: #dc3545;">⚠️</div>
-            <div class="chart-empty-text">Error loading data</div>
-            <div class="chart-empty-subtext">${message}</div>
-        </div>
-    `;
-}
-
-function hexToRgba(hex, alpha) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ============================================================
