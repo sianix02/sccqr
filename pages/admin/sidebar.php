@@ -38,10 +38,17 @@
         </li>
         <li class="nav-item">
             <button class="nav-button" data-page="students">
-                <span class="nav-icon">👥</span>
+                <span class="nav-icon">👥</span>    
                 Students
             </button>
         </li>
+        <li class="nav-item">
+            <button class="nav-button" data-page="instructor">
+                <span class="nav-icon">👨‍🏫</span>
+                Instructors
+            </button>
+        </li>
+        <!-- END NEW ITEM -->
         <li class="nav-item">
             <button class="nav-button" data-page="create-account">
                 <span class="nav-icon">➕</span>

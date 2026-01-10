@@ -1,0 +1,585 @@
+/* Instructor Management Specific Styles - For Sets A, B, C, D */
+
+/* ========================================
+   SET BADGE STYLING (Table Display)
+   ======================================== */
+.set-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 70px;
+    transition: all 0.3s ease;
+    margin: 2px;
+}
+
+.set-badge.set-a {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.set-badge.set-b {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.set-badge.set-c {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.set-badge.set-d {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.set-badge.unassigned {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.set-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   YEAR LEVEL BADGE
+   ======================================== */
+.year-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #856404;
+    font-weight: 600;
+}
+
+/* ========================================
+   SETS CONTAINER (Table Cell)
+   ======================================== */
+.sets-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.set-count {
+    color: #666;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 5px;
+}
+
+/* ========================================
+   SET SELECTION CONTAINER (Modal Form)
+   ======================================== */
+.set-selection-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.set-checkbox-label {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    user-select: none;
+}
+
+.set-checkbox-label:hover {
+    background: #f0f8ff;
+    border-color: #0066cc;
+}
+
+.set-checkbox-label.selected {
+    background: #e8f4fd;
+    border-color: #0066cc;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.set-checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.set-checkbox-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ========================================
+   POSITION BADGE STYLING
+   ======================================== */
+.position-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.position-badge.dean {
+    background: #ffd700;
+    color: #000;
+    border: 2px solid #ffb700;
+}
+
+.position-badge.adviser {
+    background: #90ee90;
+    color: #000;
+    border: 2px solid #32cd32;
+}
+
+.position-badge.associate-dean {
+    background: #87ceeb;
+    color: #000;
+    border: 2px solid #4682b4;
+}
+
+.position-badge.department-head {
+    background: #98fb98;
+    color: #000;
+    border: 2px solid #228b22;
+}
+
+.position-badge.instructor {
+    background: #dda0dd;
+    color: #000;
+    border: 2px solid #9370db;
+}
+
+/* ========================================
+   DEPARTMENT BADGE
+   ======================================== */
+.department-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #e8f4fd;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #0066cc;
+    font-weight: 500;
+}
+
+/* ========================================
+   TABLE ENHANCEMENTS
+   ======================================== */
+.instructor-table-row {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.instructor-table-row:hover {
+    background-color: #f8f9fa !important;
+    transform: scale(1.01);
+}
+
+.instructor-table-row td {
+    padding: 15px 12px !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+}
+
+/* ========================================
+   ACTION BUTTONS
+   ======================================== */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-edit {
+    background: #0066cc;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-edit:hover {
+    background: #004080;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-assign {
+    background: #28a745;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-assign:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* ========================================
+   MODAL ENHANCEMENTS
+   ======================================== */
+#instructor-modal,
+#delete-instructor-modal {
+    animation: fadeIn 0.3s ease;
+    display: none;
+}
+
+#instructor-modal.show,
+#delete-instructor-modal.show {
+    display: flex !important;
+}
+
+#instructor-modal > div,
+#delete-instructor-modal > div {
+    animation: slideUp 0.3s ease;
+}
+
+/* ========================================
+   FORM STYLING
+   ======================================== */
+#instructor-form .form-group {
+    margin-bottom: 20px;
+}
+
+#instructor-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: #004080;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#instructor-form input,
+#instructor-form select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#instructor-form input:focus,
+#instructor-form select:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.empty-state-text {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.empty-state-subtext {
+    font-size: 14px;
+    color: #999;
+}
+
+/* ========================================
+   LOADING SPINNER
+   ======================================== */
+.loading-spinner {
+    border: 4px solid rgba(0, 102, 204, 0.3);
+    border-radius: 50%;
+    border-top-color: #0066cc;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   FILTER INFO
+   ======================================== */
+#instructor-filter-info {
+    background: #e8f4fd;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border-left: 4px solid #0066cc;
+}
+
+/* ========================================
+   STATS CARD HOVER EFFECT
+   ======================================== */
+.stat-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes highlight {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(0, 102, 204, 0.1);
+    }
+}
+
+.highlight-row {
+    animation: highlight 1s ease;
+}
+
+/* ========================================
+   SUCCESS/ERROR STATES
+   ======================================== */
+.input-success {
+    border-color: #28a745 !important;
+}
+
+.input-error {
+    border-color: #dc3545 !important;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+/* ========================================
+   TOOLTIP
+   ======================================== */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* ========================================
+   TOAST NOTIFICATIONS
+   ======================================== */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast.success {
+    background: #28a745;
+    color: white;
+}
+
+.toast.error {
+    background: #dc3545;
+    color: white;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons button {
+        width: 100%;
+    }
+    
+    .set-badge,
+    .position-badge {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+    
+    .department-badge,
+    .year-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .table-container {
+        font-size: 12px;
+    }
+    
+    .instructor-table-row td {
+        padding: 10px 8px !important;
+    }
+    
+    .set-selection-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    #instructor-modal > div,
+    #delete-instructor-modal > div {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .set-badge {
+        font-size: 9px;
+        padding: 3px 6px;
+        min-width: 50px;
+    }
+}
+
+/* All Sets Badge Styling - Add this to your CSS file */
+
+.set-badge.all-sets {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    border: 2px solid #5568d3;
+}
+
+.set-badge.all-sets::before {
+    content: "🎯 ";
+    margin-right: 4px;
+}
+
+/* Optional: Add hover effect */
+.set-badge.all-sets:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    transition: all 0.2s ease;
+}

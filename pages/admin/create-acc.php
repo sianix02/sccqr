@@ -33,7 +33,8 @@
                 <select id="position" name='position'>
                     <option value="">Select position</option>
                     <option value="Dean">Dean</option>
-                    <option value="Adviser">Adviser</option>
+                    <option value="Adviser">Instructor</option>
+                    <option value="Department Head">Department Head</option>
                 </select>
             </div>
             

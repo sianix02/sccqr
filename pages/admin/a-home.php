@@ -56,6 +56,8 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
     <link rel="stylesheet" href="../../css/admin_home.css">
     <link rel="stylesheet" href="../../css/analytics_chart.css">
+    <link rel="stylesheet" href="../../css/admin_instructor.css">
+
 </head>
 <body>
     <?php include 'sidebar.php'; ?>
@@ -66,6 +68,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         <?php include 'start-event.php'; ?>
         <?php include 'event-history.php'; ?>
         <?php include 'student.php'; ?>
+        <?php include 'instructor.php'; ?> 
         <?php include 'create-acc.php'; ?>
         <?php include 'logout.php'; ?>
         <?php include 'admin_profile_modal.php'; ?>
@@ -78,7 +81,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     <script src="../../script/admin_profile_handler.js"></script>
     <script src="../../script/admin_password_handler.js"></script>
     <script src="../../script/admin-analytics.js"></script>
-
+    <script src="../../script/admin_instructor.js"></script> 
 
 </body>
 </html>
