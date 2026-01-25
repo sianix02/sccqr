@@ -1,6 +1,6 @@
 <?php
-// File: C:\laragon\www\sccqr\api\instructor_export_all_students.php
-// FIXED VERSION - Properly counts absences and marks inactive at 4+ absences
+// File: instructor_export_all_students.php
+// FIXED VERSION - Properly queries students with JOIN to users table
 
 session_start();
 
@@ -27,9 +27,10 @@ $user_id = $_SESSION['session_id'];
 
 try {
     // Get instructor info to filter students
-    $instructor_query = "SELECT position, year_level_assigned, department, first_name, last_name
-                         FROM instructor 
-                         WHERE adviser_id = ? 
+    $instructor_query = "SELECT i.position, i.year_level_assigned, i.department, i.first_name, i.last_name
+                         FROM instructor i
+                         INNER JOIN users u ON i.adviser_id = u.user_id
+                         WHERE u.user_id = ? 
                          LIMIT 1";
     
     $inst_stmt = $conn->prepare($instructor_query);
@@ -48,22 +49,39 @@ try {
     $year_level = $instructor['year_level_assigned'] ?? '';
     $department = $instructor['department'] ?? '';
     
-    // Build query - Get students first
+    // Build query - Get students WITH PROPER JOIN (same as instructor_get_class_students.php)
     $student_query = "SELECT 
                 s.student_id,
-                CONCAT(s.first_name, ' ', IFNULL(s.middle_initial, ''), ' ', s.last_name) as full_name,
+                CONCAT(
+                    IFNULL(s.first_name, ''), 
+                    ' ', 
+                    IFNULL(s.middle_initial, ''), 
+                    ' ', 
+                    IFNULL(s.last_name, '')
+                ) as full_name,
                 s.course,
                 s.student_set,
                 s.year_level,
                 COALESCE(sa.is_archived, 0) as is_archived
             FROM student s
+            INNER JOIN users u ON s.user_id = u.user_id
             LEFT JOIN student_archive sa ON s.student_id = sa.student_id
             WHERE 1=1";
 
-    // Apply instructor-specific filtering
-    if (strpos($position, 'dean') !== false) {
+    // Apply instructor-specific filtering (same logic as instructor_get_class_students.php)
+    if (strpos($position, 'dean') !== false || 
+        strpos($position, 'department head') !== false || 
+        strpos($position, 'head') !== false) {
+        // Dean/Department Head: All students in department
+        if (empty($department)) {
+            throw new Exception('Department not set for Dean/Department Head');
+        }
         $student_query .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
     } else {
+        // Adviser: Specific year level in department
+        if (empty($year_level) || empty($department)) {
+            throw new Exception('Year level or department not set for Adviser');
+        }
         $student_query .= " AND s.year_level = '" . $conn->real_escape_string($year_level) . "'";
         $student_query .= " AND s.course = '" . $conn->real_escape_string($department) . "'";
     }
@@ -114,7 +132,7 @@ try {
         
         $students[] = [
             'id' => $student_id,
-            'name' => $row['full_name'],
+            'name' => trim($row['full_name']),
             'course' => $row['course'] ?: 'N/A',
             'set' => $row['student_set'] ?: 'N/A',
             'year' => $row['year_level'] ?: 'N/A',
@@ -129,6 +147,11 @@ try {
     
     $conn->close();
     
+    // Check if no students found
+    if (count($students) === 0) {
+        throw new Exception('No students found for your assignment. Please verify your position settings.');
+    }
+    
     // ===== CREATE PDF =====
     $pdf = new PDF_Generator('L', 'mm', [297, 210]); // A4 Landscape
     $pdf->setReportTitle('INSTRUCTOR CLASS LIST - ATTENDANCE REPORT');
@@ -142,11 +165,17 @@ try {
     
     $instructor_name = trim($instructor['first_name'] . ' ' . $instructor['last_name']);
     
+    // Determine display text for year level
+    $isDeanOrHead = (strpos($position, 'dean') !== false || 
+                     strpos($position, 'department head') !== false || 
+                     strpos($position, 'head') !== false);
+    $displayYearLevel = $isDeanOrHead ? 'All Year Levels' : $year_level;
+    
     $pdf->InfoBox('Report Date:', date('F d, Y g:i A'));
     $pdf->InfoBox('Instructor:', $instructor_name);
     $pdf->InfoBox('Position:', $instructor['position']);
     $pdf->InfoBox('Department:', $department);
-    $pdf->InfoBox('Year Level:', strpos($position, 'dean') !== false ? 'All Years' : $year_level);
+    $pdf->InfoBox('Year Level:', $displayYearLevel);
     $pdf->InfoBox('Total Students:', count($students));
     
     $pdf->Ln(5);
@@ -191,74 +220,69 @@ try {
     $header = ['ID', 'Name', 'Course', 'Set', 'Year', 'Present', 'Late', 'Absent', 'Rate', 'Status'];
     $widths = [30, 55, 35, 20, 18, 20, 20, 20, 20, 29];
     
-    if (count($students) === 0) {
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(0, 10, 'No students found in your assigned class', 0, 1, 'C');
-    } else {
-        // Table Header
-        $pdf->SetFillColor(0, 102, 204);
-        $pdf->SetTextColor(255);
-        $pdf->SetDrawColor(0, 102, 204);
-        $pdf->SetLineWidth(.3);
-        $pdf->SetFont('', 'B', 9);
+    // Table Header
+    $pdf->SetFillColor(0, 102, 204);
+    $pdf->SetTextColor(255);
+    $pdf->SetDrawColor(0, 102, 204);
+    $pdf->SetLineWidth(.3);
+    $pdf->SetFont('', 'B', 9);
+    
+    for($i = 0; $i < count($header); $i++) {
+        $pdf->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
+    }
+    $pdf->Ln();
+    
+    // Data
+    $pdf->SetFillColor(224, 235, 255);
+    $pdf->SetTextColor(0);
+    $pdf->SetFont('', '', 8);
+    
+    $fill = false;
+    foreach($students as $row) {
+        $attended = $row['present'] + $row['late'];
+        $attendanceRate = $row['total'] > 0 ? round(($attended / $row['total']) * 100) : 0;
         
-        for($i = 0; $i < count($header); $i++) {
-            $pdf->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
+        // Highlight rows with 4+ absences
+        if ($row['absent'] >= 4) {
+            $pdf->SetFillColor(255, 240, 240); // Light red background
+        } else {
+            $pdf->SetFillColor($fill ? 224 : 255, $fill ? 235 : 255, $fill ? 255 : 255);
         }
-        $pdf->Ln();
         
-        // Data
-        $pdf->SetFillColor(224, 235, 255);
+        $pdf->Cell($widths[0], 7, $row['id'], 'LRB', 0, 'C', true);
+        $pdf->Cell($widths[1], 7, substr($row['name'], 0, 30), 'LRB', 0, 'L', true);
+        $pdf->Cell($widths[2], 7, substr($row['course'], 0, 15), 'LRB', 0, 'C', true);
+        $pdf->Cell($widths[3], 7, $row['set'], 'LRB', 0, 'C', true);
+        $pdf->Cell($widths[4], 7, $row['year'], 'LRB', 0, 'C', true);
+        $pdf->Cell($widths[5], 7, $row['present'], 'LRB', 0, 'C', true);
+        $pdf->Cell($widths[6], 7, $row['late'], 'LRB', 0, 'C', true);
+        
+        // Highlight absent count if >= 4
+        if ($row['absent'] >= 4) {
+            $pdf->SetFont('', 'B', 9);
+            $pdf->SetTextColor(220, 53, 69);
+        }
+        $pdf->Cell($widths[7], 7, $row['absent'], 'LRB', 0, 'C', true);
+        $pdf->SetFont('', '', 8);
+        $pdf->SetTextColor(0);
+        
+        $pdf->Cell($widths[8], 7, $attendanceRate . '%', 'LRB', 0, 'C', true);
+        
+        // Status with color
+        $colors = $pdf->getStatusColor($row['status']);
+        $pdf->SetFillColor($colors[0], $colors[1], $colors[2]);
+        $pdf->SetTextColor($colors[3]);
+        $pdf->SetFont('', 'B', 8);
+        $pdf->Cell($widths[9], 7, $row['status'], 'LRB', 0, 'C', true);
+        
         $pdf->SetTextColor(0);
         $pdf->SetFont('', '', 8);
         
-        $fill = false;
-        foreach($students as $row) {
-            $attended = $row['present'] + $row['late'];
-            $attendanceRate = $row['total'] > 0 ? round(($attended / $row['total']) * 100) : 0;
-            
-            // Highlight rows with 4+ absences
-            if ($row['absent'] >= 4) {
-                $pdf->SetFillColor(255, 240, 240); // Light red background
-            } else {
-                $pdf->SetFillColor($fill ? 224 : 255, $fill ? 235 : 255, $fill ? 255 : 255);
-            }
-            
-            $pdf->Cell($widths[0], 7, $row['id'], 'LRB', 0, 'C', true);
-            $pdf->Cell($widths[1], 7, substr($row['name'], 0, 30), 'LRB', 0, 'L', true);
-            $pdf->Cell($widths[2], 7, substr($row['course'], 0, 15), 'LRB', 0, 'C', true);
-            $pdf->Cell($widths[3], 7, $row['set'], 'LRB', 0, 'C', true);
-            $pdf->Cell($widths[4], 7, $row['year'], 'LRB', 0, 'C', true);
-            $pdf->Cell($widths[5], 7, $row['present'], 'LRB', 0, 'C', true);
-            $pdf->Cell($widths[6], 7, $row['late'], 'LRB', 0, 'C', true);
-            
-            // Highlight absent count if >= 4
-            if ($row['absent'] >= 4) {
-                $pdf->SetFont('', 'B', 9);
-                $pdf->SetTextColor(220, 53, 69);
-            }
-            $pdf->Cell($widths[7], 7, $row['absent'], 'LRB', 0, 'C', true);
-            $pdf->SetFont('', '', 8);
-            $pdf->SetTextColor(0);
-            
-            $pdf->Cell($widths[8], 7, $attendanceRate . '%', 'LRB', 0, 'C', true);
-            
-            // Status with color
-            $colors = $pdf->getStatusColor($row['status']);
-            $pdf->SetFillColor($colors[0], $colors[1], $colors[2]);
-            $pdf->SetTextColor($colors[3]);
-            $pdf->SetFont('', 'B', 8);
-            $pdf->Cell($widths[9], 7, $row['status'], 'LRB', 0, 'C', true);
-            
-            $pdf->SetTextColor(0);
-            $pdf->SetFont('', '', 8);
-            
-            $pdf->Ln();
-            $fill = !$fill;
-        }
-        
-        $pdf->Cell(array_sum($widths), 0, '', 'T');
+        $pdf->Ln();
+        $fill = !$fill;
     }
+    
+    $pdf->Cell(array_sum($widths), 0, '', 'T');
     
     // Footer note
     $pdf->InactiveStatusNote();

@@ -1,4 +1,4 @@
-// Profile Modal Handler - Complete Version
+// Profile Modal Handler - Updated with Assigned Sets Support
 (function() {
     let hasProfile = false;
     let isEditMode = false;
@@ -29,7 +29,7 @@
     
     // Display profile information
     function displayProfile(data) {
-        const fullName = `${data.first_name} ${data.last_name}`;
+        const fullName = `${data.first_name} ${data.middle_initial || ''} ${data.last_name}`.trim();
         const initials = `${data.first_name.charAt(0)}${data.last_name.charAt(0)}`.toUpperCase();
         
         $('#avatar-initials').text(initials);
@@ -41,16 +41,83 @@
         const position = data.position || 'Not Assigned';
         $('#display-position').text(position);
         
+        // Display assigned sets
+        displayAssignedSets(data.assigned_sets || [], '#display-assigned-sets', data);
+        
+        // Populate form fields
         $('#first_name').val(data.first_name);
         $('#middle_initial').val(data.middle_initial || '');
         $('#last_name').val(data.last_name);
+        
+        // Populate READ-ONLY fields
+        $('#department_readonly').val(data.department);
         $('#department').val(data.department);
+        
+        $('#year_level_readonly').val(data.year_level_assigned);
         $('#year_level').val(data.year_level_assigned);
+        
+        $('#position_readonly').val(position);
+        $('#position').val(position);
+        
+        // Store assigned sets
+        $('#assigned_sets').val(JSON.stringify(data.assigned_sets || []));
+        displayAssignedSets(data.assigned_sets || [], '#assigned_sets_display', data);
         
         $('#profile-view').show();
         $('#profile-form').hide();
         $('#profile-modal-title').text('Your Profile');
         $('#profile-alert').hide();
+    }
+    
+    // Display assigned sets as badges
+    function displayAssignedSets(sets, targetSelector, profileData) {
+        const container = $(targetSelector);
+        container.empty();
+        
+        if (!sets || sets.length === 0) {
+            container.html('<span style="color: #999;">No sets assigned</span>');
+            return;
+        }
+        
+        // Check if Department Head or Dean
+        const position = (profileData?.position || '').toLowerCase();
+        const isDeanOrHead = position.includes('dean') || 
+                            position.includes('department head') || 
+                            position.includes('head');
+        
+        if (isDeanOrHead) {
+            // Show "All Sets" badge for Department Heads/Deans
+            const allSetsBadge = $(`
+                <span class="set-badge" style="
+                    background: linear-gradient(135deg, #ffd700, #ffed4e);
+                    color: #333;
+                    font-weight: 700;
+                    border: 2px solid #f0c000;
+                ">
+                    ⭐ All Sets
+                </span>
+            `);
+            container.append(allSetsBadge);
+            
+            // Add count
+            const countText = $(`
+                <span style="
+                    color: #666;
+                    font-size: 12px;
+                    margin-left: 8px;
+                    font-style: italic;
+                ">
+                    (${sets.length} sets)
+                </span>
+            `);
+            container.append(countText);
+        } else {
+            // Show individual set badges for Advisers
+            sets.forEach(set => {
+                const badge = $('<span class="set-badge"></span>').text(set);
+                container.append(badge);
+            });
+        }
     }
     
     // Show profile modal
@@ -72,13 +139,17 @@
     // Close modal
     function closeProfileModal() {
         if (!hasProfile) {
-            Notifications.alert({
-                title: 'Profile Required',
-                message: 'Please complete your profile to continue.',
-                icon: 'warning',
-                buttonText: 'OK',
-                buttonClass: 'primary'
-            });
+            if (typeof Notifications !== 'undefined') {
+                Notifications.alert({
+                    title: 'Profile Required',
+                    message: 'Please complete your profile to continue.',
+                    icon: 'warning',
+                    buttonText: 'OK',
+                    buttonClass: 'primary'
+                });
+            } else {
+                alert('Please complete your profile to continue.');
+            }
             return;
         }
         $('#profile-modal-overlay').removeClass('active');

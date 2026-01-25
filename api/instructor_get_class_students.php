@@ -1,7 +1,6 @@
 <?php
-// File: C:\laragon\www\sccqr\api\instructor_get_class_students.php
-// INSTRUCTOR-ONLY API - Does NOT affect admin or other dashboards
-// Uses 4 Absence = Inactive Rule
+// File: instructor_get_class_students.php
+// UPDATED VERSION - Uses instructor_sets table for proper set assignments
 
 session_start();
 header('Access-Control-Allow-Origin: *');
@@ -46,7 +45,7 @@ try {
     $instructor_query = "SELECT 
             i.adviser_id, 
             i.position, 
-            i.year_level_assigned, 
+            i.year_level_assigned,
             i.department,
             i.first_name, 
             i.last_name
@@ -84,6 +83,28 @@ try {
     $position = strtolower(trim($instructor['position']));
     $year_level = $instructor['year_level_assigned'] ?? '';
     $department = $instructor['department'] ?? '';
+    $adviser_id = $instructor['adviser_id'];
+    
+    // Get assigned sets from instructor_sets table
+    $sets_query = "SELECT set_name FROM instructor_sets WHERE adviser_id = ? ORDER BY set_name ASC";
+    $sets_stmt = $conn->prepare($sets_query);
+    $assigned_sets_array = [];
+    
+    if ($sets_stmt) {
+        $sets_stmt->bind_param("i", $adviser_id);
+        if ($sets_stmt->execute()) {
+            $sets_result = $sets_stmt->get_result();
+            while ($set_row = $sets_result->fetch_assoc()) {
+                $assigned_sets_array[] = $set_row['set_name'];
+            }
+        }
+        $sets_stmt->close();
+    }
+    
+    // Determine if Dean/Department Head
+    $isDeanOrHead = (strpos($position, 'dean') !== false || 
+                     strpos($position, 'department head') !== false || 
+                     strpos($position, 'head') !== false);
     
     // Build student query based on position
     $query = "SELECT 
@@ -103,27 +124,40 @@ try {
             IFNULL(s.course, 'N/A') as course,
             IFNULL(s.sex, 'N/A') as sex
           FROM student s
+          INNER JOIN users u ON s.user_id = u.user_id
           WHERE 1=1";
     
     $params = [];
     $types = "";
     
     // Apply role-based filtering
-    if (strpos($position, 'dean') !== false) {
+    if ($isDeanOrHead) {
+        // Dean/Department Head: All students in department (all year levels, all sets)
         if (empty($department)) {
-            throw new Exception('Department not set for Dean');
+            throw new Exception('Department not set for Dean/Department Head');
         }
         $query .= " AND s.course = ?";
         $params[] = $department;
         $types .= "s";
     } else {
+        // Adviser: Students in specific year level and department
         if (empty($year_level) || empty($department)) {
-            throw new Exception('Year level or department not set');
+            throw new Exception('Year level or department not set for Adviser');
         }
         $query .= " AND s.year_level = ? AND s.course = ?";
         $params[] = $year_level;
         $params[] = $department;
         $types .= "ss";
+        
+        // FILTER BY ASSIGNED SETS from instructor_sets table
+        if (count($assigned_sets_array) > 0) {
+            $placeholders = implode(',', array_fill(0, count($assigned_sets_array), '?'));
+            $query .= " AND s.student_set IN ($placeholders)";
+            foreach ($assigned_sets_array as $set) {
+                $params[] = $set;
+                $types .= "s";
+            }
+        }
     }
     
     $query .= " ORDER BY s.student_id ASC";
@@ -183,7 +217,7 @@ try {
                     $timeIn = $attRow['time_in'] ?? '00:00:00';
                     $timeOut = $attRow['time_out'] ?? '00:00:00';
                     
-                    // ===== COUNT ABSENCES (time_in = '00:00:00' AND time_out = '00:00:00') =====
+                    // Count absences
                     if ($timeIn === '00:00:00' && $timeOut === '00:00:00') {
                         $absentCount++;
                         $status = 'Absent';
@@ -216,7 +250,7 @@ try {
             $attendanceStmt->close();
         }
         
-        // ===== CHECK MANUAL ARCHIVE STATUS =====
+        // Check manual archive status
         $archiveQuery = "SELECT is_archived FROM student_archive WHERE student_id = ? LIMIT 1";
         $archiveStmt = $conn->prepare($archiveQuery);
         $isManuallyArchived = false;
@@ -233,7 +267,7 @@ try {
             $archiveStmt->close();
         }
         
-        // ===== INSTRUCTOR RULE: Manual Archive OR 4+ Absences = Inactive =====
+        // Instructor rule: Manual Archive OR 4+ Absences = Inactive
         $studentStatus = ($isManuallyArchived || $absentCount >= 4) ? 'Inactive' : 'Active';
         
         $students[] = [
@@ -253,6 +287,15 @@ try {
     
     $stmt->close();
     
+    // For display: if no sets assigned but Dean/Head, get all unique sets from students
+    if ($isDeanOrHead && count($assigned_sets_array) === 0) {
+        $uniqueSets = array_unique(array_column($students, 'set'));
+        $assigned_sets_array = array_values($uniqueSets);
+        sort($assigned_sets_array);
+    }
+    
+    $displayYearLevel = $isDeanOrHead ? 'All Year Levels' : $year_level;
+    
     // Success response
     echo json_encode([
         'success' => true,
@@ -261,8 +304,10 @@ try {
         'instructor' => [
             'position' => $instructor['position'],
             'department' => $department,
-            'yearLevel' => $year_level,
-            'name' => trim($instructor['first_name'] . ' ' . $instructor['last_name'])
+            'yearLevel' => $displayYearLevel,
+            'name' => trim($instructor['first_name'] . ' ' . $instructor['last_name']),
+            'isDeanOrHead' => $isDeanOrHead,
+            'assignedSets' => $assigned_sets_array
         ],
         'timestamp' => date('Y-m-d H:i:s')
     ]);

@@ -1,6 +1,6 @@
 <?php
-// File: C:\laragon\www\sccqr\api\instructor_export_individual_student.php
-// FIXED VERSION - Properly counts absences and marks inactive at 4+ absences
+// File: instructor_export_individual_student.php
+// FIXED VERSION - Added authorization check and proper student query
 
 session_start();
 
@@ -23,6 +23,7 @@ if (!isset($conn) || $conn->connect_error) {
     die('Database connection failed');
 }
 
+$user_id = $_SESSION['session_id'];
 $student_id = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
 
 if (!$student_id) {
@@ -30,22 +31,65 @@ if (!$student_id) {
 }
 
 try {
-    // Get student info
+    // AUTHORIZATION CHECK: Verify instructor has access to this student
+    $auth_query = "SELECT i.position, i.year_level_assigned, i.department
+                   FROM instructor i
+                   INNER JOIN users u ON i.adviser_id = u.user_id
+                   WHERE u.user_id = ?
+                   LIMIT 1";
+    
+    $auth_stmt = $conn->prepare($auth_query);
+    $auth_stmt->bind_param("i", $user_id);
+    $auth_stmt->execute();
+    $auth_result = $auth_stmt->get_result();
+    
+    if ($auth_result->num_rows === 0) {
+        throw new Exception('Instructor not found');
+    }
+    
+    $instructor = $auth_result->fetch_assoc();
+    $auth_stmt->close();
+    
+    $position = strtolower(trim($instructor['position']));
+    $year_level = $instructor['year_level_assigned'] ?? '';
+    $department = $instructor['department'] ?? '';
+    
+    // Get student info WITH PROPER JOIN and authorization check
     $student_query = "
         SELECT s.first_name, s.last_name, s.student_id, s.year_level, s.student_set, s.course, s.sex
         FROM student s
         INNER JOIN users u ON s.user_id = u.user_id
-        WHERE s.student_id = ?
-        LIMIT 1
-    ";
+        WHERE s.student_id = ?";
+    
+    // Add authorization filter
+    if (strpos($position, 'dean') !== false || 
+        strpos($position, 'department head') !== false || 
+        strpos($position, 'head') !== false) {
+        // Dean/Department Head: Must be in same department
+        $student_query .= " AND s.course = ?";
+    } else {
+        // Adviser: Must be in same year level and department
+        $student_query .= " AND s.year_level = ? AND s.course = ?";
+    }
+    
+    $student_query .= " LIMIT 1";
 
     $student_stmt = $conn->prepare($student_query);
-    $student_stmt->bind_param("i", $student_id);
+    
+    // Bind parameters based on position
+    if (strpos($position, 'dean') !== false || 
+        strpos($position, 'department head') !== false || 
+        strpos($position, 'head') !== false) {
+        $student_stmt->bind_param("is", $student_id, $department);
+    } else {
+        $student_stmt->bind_param("iss", $student_id, $year_level, $department);
+    }
+    
     $student_stmt->execute();
     $student_result = $student_stmt->get_result();
     
     if ($student_result->num_rows === 0) {
-        die('Student not found');
+        throw new Exception('Student not found or you do not have permission to view this student');
     }
 
     $student = $student_result->fetch_assoc();
@@ -317,15 +361,35 @@ try {
     $pdf->InactiveStatusNote();
     
     $filename = 'Student_' . str_replace(' ', '_', $student['first_name'] . '_' . $student['last_name']) . '_Report_' . date('Y-m-d') . '.pdf';
+    
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Transfer-Encoding: binary');
+    header('Accept-Ranges: bytes');
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
+    header('Expires: 0');
+    
     $pdf->Output('D', $filename);
     exit;
 
 } catch (Exception $e) {
-    header('Content-Type: application/json');
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    header('Content-Type: text/html; charset=utf-8');
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage()
-    ]);
+    echo '<!DOCTYPE html>';
+    echo '<html><head><title>PDF Generation Error</title></head><body>';
+    echo '<h1>Error Generating PDF</h1>';
+    echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
+    echo '<p><a href="javascript:history.back()">Go Back</a></p>';
+    echo '</body></html>';
+    exit;
 }
 ?>

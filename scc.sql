@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jan 10, 2026 at 04:51 AM
+-- Generation Time: Jan 10, 2026 at 10:12 AM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.16
 
@@ -636,9 +636,31 @@ CREATE TABLE `instructor` (
 --
 
 INSERT INTO `instructor` (`adviser_id`, `first_name`, `middle_initial`, `last_name`, `year_level_assigned`, `department`, `position`) VALUES
-(6, 'Javan Alexandre', 'A', 'Juario', '4th Year', 'BS Information Technology', 'Dean'),
-(69, 'Maria', 'A', 'De los Santos', '1st Year', 'BS Information Technology', 'Adviser'),
-(72, 'winaflor', 'A', 'ratunil', '3rd Year', 'BS Information Technology', 'Adviser');
+(6, 'Javan Alexandre', 'A', 'Juario', 'All Year Level', 'BS Information Technology', 'Department Head'),
+(69, 'Maria', 'A', 'De los Santos', '1st Year', 'BS Information Technology', 'Instructor'),
+(72, 'Winaflor', 'A.', 'Ratunil', '2nd Year', 'BS Information Technology', 'Instructor');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_sets`
+--
+
+CREATE TABLE `instructor_sets` (
+  `assignment_id` int NOT NULL,
+  `adviser_id` int NOT NULL,
+  `set_name` enum('Set A','Set B','Set C','Set D') NOT NULL,
+  `assigned_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `instructor_sets`
+--
+
+INSERT INTO `instructor_sets` (`assignment_id`, `adviser_id`, `set_name`, `assigned_date`) VALUES
+(7, 72, 'Set A', '2026-01-10 10:07:01'),
+(8, 72, 'Set C', '2026-01-10 10:07:01'),
+(9, 72, 'Set D', '2026-01-10 10:07:01');
 
 -- --------------------------------------------------------
 
@@ -876,7 +898,7 @@ INSERT INTO `users` (`user_id`, `password`, `role`, `username`) VALUES
 (69, '$2y$10$NsGtkmk0vazUSUCRe1929.vvMh1DZ5oSj7/pnrzB9dtMv/s3/2Zme', 'instructor', 143),
 (70, '$2y$10$iveIE1BgTYaRavY17h7DEOQT4pPML3E0ypGLDk4lze27uvWGhW/a.', 'instructor', 369),
 (71, '$2y$10$6QLmM/.GNM.Pn2o/DQVs8Op1bDGjlzcpfdWZ0LKsCd5x3.EAFU3tW', 'student', 69),
-(72, '$2y$10$e6STQU8ngNl8.zYa8mi/ieKu0pAI1tia9Gskski0awUJsoVPTB3/y', 'instructor', 10);
+(72, '$2y$10$cyOT6N7slUdyHMEE6KQp/ubrcZWnDcKt4ybxWWpiXCkNrQowz5b7W', 'instructor', 10);
 
 --
 -- Indexes for dumped tables
@@ -920,6 +942,15 @@ ALTER TABLE `events`
 --
 ALTER TABLE `instructor`
   ADD PRIMARY KEY (`adviser_id`);
+
+--
+-- Indexes for table `instructor_sets`
+--
+ALTER TABLE `instructor_sets`
+  ADD PRIMARY KEY (`assignment_id`),
+  ADD UNIQUE KEY `unique_instructor_set` (`adviser_id`,`set_name`),
+  ADD KEY `idx_adviser_id` (`adviser_id`),
+  ADD KEY `idx_set_name` (`set_name`);
 
 --
 -- Indexes for table `secret_question`
@@ -979,6 +1010,12 @@ ALTER TABLE `events`
   MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
+-- AUTO_INCREMENT for table `instructor_sets`
+--
+ALTER TABLE `instructor_sets`
+  MODIFY `assignment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
 -- AUTO_INCREMENT for table `student_archive`
 --
 ALTER TABLE `student_archive`
@@ -1017,6 +1054,12 @@ ALTER TABLE `attendance_report`
 --
 ALTER TABLE `instructor`
   ADD CONSTRAINT `FK_user_TO_instructor` FOREIGN KEY (`adviser_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `instructor_sets`
+--
+ALTER TABLE `instructor_sets`
+  ADD CONSTRAINT `FK_instructor_TO_sets` FOREIGN KEY (`adviser_id`) REFERENCES `instructor` (`adviser_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `secret_question`

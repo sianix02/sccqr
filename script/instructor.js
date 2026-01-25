@@ -1,12 +1,9 @@
 // ============================================================
-// INSTRUCTOR DASHBOARD - CLASS MANAGEMENT ONLY VERSION
-// File: instructor.js
-// Updated filter labels: Present/Absent
+// INSTRUCTOR DASHBOARD - Updated with Department Head Logic
+// Dean/Department Head: All year levels, all sets in department
+// Adviser: Specific year level, specific sets
 // ============================================================
 
-// ============================================================
-// DASHBOARD CLASS - Navigation & Core Functionality
-// ============================================================
 class Dashboard {
     constructor() {
         this.currentPage = 'class-management';
@@ -20,36 +17,34 @@ class Dashboard {
     }
 
     attachLogoutListeners() {
-    const confirmLogout = document.getElementById('confirm-logout');
-    const cancelLogout = document.getElementById('cancel-logout');
-    const logoutModal = document.getElementById('logout-modal');
-    
-    if (confirmLogout) {
-        confirmLogout.addEventListener('click', () => {
-            // Redirect to logout API
-            window.location.href = '../../sql_php/logout.php';
-        });
+        const confirmLogout = document.getElementById('confirm-logout');
+        const cancelLogout = document.getElementById('cancel-logout');
+        const logoutModal = document.getElementById('logout-modal');
+        
+        if (confirmLogout) {
+            confirmLogout.addEventListener('click', () => {
+                window.location.href = '../../sql_php/logout.php';
+            });
+        }
+        
+        if (cancelLogout) {
+            cancelLogout.addEventListener('click', () => {
+                if (logoutModal) {
+                    logoutModal.classList.remove('show');
+                    logoutModal.style.display = 'none';
+                }
+            });
+        }
+        
+        if (logoutModal) {
+            logoutModal.addEventListener('click', (e) => {
+                if (e.target === logoutModal) {
+                    logoutModal.classList.remove('show');
+                    logoutModal.style.display = 'none';
+                }
+            });
+        }
     }
-    
-    if (cancelLogout) {
-        cancelLogout.addEventListener('click', () => {
-            if (logoutModal) {
-                logoutModal.classList.remove('show');
-                logoutModal.style.display = 'none';
-            }
-        });
-    }
-    
-    // Close modal when clicking outside
-    if (logoutModal) {
-        logoutModal.addEventListener('click', (e) => {
-            if (e.target === logoutModal) {
-                logoutModal.classList.remove('show');
-                logoutModal.style.display = 'none';
-            }
-        });
-    }
-}
 
     attachNavigationListeners() {
         document.querySelectorAll('.nav-button').forEach(button => {
@@ -115,7 +110,7 @@ class Dashboard {
     }
 
     showLogoutModal() {
-    const modal = document.getElementById('logout-modal');
+        const modal = document.getElementById('logout-modal');
         if (modal) {
             modal.style.display = 'flex';
             modal.classList.add('show');
@@ -123,10 +118,6 @@ class Dashboard {
     }
 
     showNotification(message, type = 'success') {
-        // Simple console notification if toast system not available
-        console.log(`${type.toUpperCase()}: ${message}`);
-        
-        // Optional: Create a simple toast notification
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
@@ -151,7 +142,7 @@ class Dashboard {
 }
 
 // ============================================================
-// CLASS MANAGEMENT MODULE - UPDATED FILTER LOGIC
+// CLASS MANAGEMENT MODULE - Department Head Support
 // ============================================================
 class ClassManagement {
     constructor(dashboard) {
@@ -162,7 +153,6 @@ class ClassManagement {
         this.isLoading = false;
         this.currentViewingStudent = null;
         
-        // Filter options
         this.availableEvents = [];
         this.availableDates = [];
         this.availableSets = [];
@@ -176,7 +166,6 @@ class ClassManagement {
     }
 
     attachEventListeners() {
-        // Search
         const searchInput = document.getElementById('class-student-search');
         if (searchInput) {
             searchInput.addEventListener('input', () => {
@@ -184,7 +173,6 @@ class ClassManagement {
             });
         }
 
-        // Sort
         const sortSelect = document.getElementById('class-sort-students');
         if (sortSelect) {
             sortSelect.addEventListener('change', (e) => {
@@ -192,7 +180,6 @@ class ClassManagement {
             });
         }
 
-        // NEW FILTERS - UPDATED FOR PRESENT/ABSENT
         const statusFilter = document.getElementById('class-filter-status');
         if (statusFilter) {
             statusFilter.addEventListener('change', () => {
@@ -225,7 +212,6 @@ class ClassManagement {
             });
         }
 
-        // Clear Filters
         const clearFiltersBtn = document.getElementById('class-clear-filters');
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => {
@@ -233,7 +219,6 @@ class ClassManagement {
             });
         }
 
-        // Other buttons
         const refreshBtn = document.getElementById('class-refresh-students');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
@@ -300,7 +285,12 @@ class ClassManagement {
                 this.studentsData = result.data;
                 this.instructorInfo = result.instructor;
                 
+                // Extract filter options FIRST (including sets)
                 this.extractFilterOptions();
+                
+                // THEN update instructor info display (which needs availableSets)
+                this.updateInstructorInfo();
+                
                 this.populateFilterDropdowns();
                 this.updateInfoBadge();
                 this.applyFilters();
@@ -330,6 +320,92 @@ class ClassManagement {
         }
     }
 
+    updateInstructorInfo() {
+        if (!this.instructorInfo) return;
+        
+        // Update position
+        const positionEl = document.getElementById('instructor-position');
+        if (positionEl) {
+            positionEl.textContent = this.instructorInfo.position || 'Not Assigned';
+        }
+        
+        // Update department
+        const deptEl = document.getElementById('instructor-department');
+        if (deptEl) {
+            deptEl.textContent = this.instructorInfo.department || 'Not Assigned';
+        }
+        
+        // Update year level (shows "All Year Levels" for Dean/Department Head)
+        const yearEl = document.getElementById('instructor-year-level');
+        if (yearEl) {
+            yearEl.textContent = this.instructorInfo.yearLevel || 'Not Assigned';
+        }
+        
+        // Update assigned sets
+        this.updateAssignedSetsDisplay();
+    }
+
+    updateAssignedSetsDisplay() {
+        const setsContainer = document.getElementById('instructor-assigned-sets');
+        if (!setsContainer) return;
+        
+        setsContainer.innerHTML = '';
+        
+        // Check if Dean or Department Head
+        const isDeanOrHead = this.instructorInfo?.isDeanOrHead || false;
+        
+        if (!this.availableSets || this.availableSets.length === 0) {
+            setsContainer.innerHTML = `
+                <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 12px; font-size: 13px;">
+                    No sets assigned
+                </span>
+            `;
+            return;
+        }
+        
+        // If Department Head/Dean: Show "All Sets" badge
+        if (isDeanOrHead) {
+            const allSetsBadge = document.createElement('span');
+            allSetsBadge.style.cssText = `
+                background: rgba(255,215,0,0.4);
+                padding: 6px 16px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 700;
+                border: 2px solid rgba(255,255,255,0.3);
+            `;
+            allSetsBadge.textContent = '⭐ All Sets';
+            setsContainer.appendChild(allSetsBadge);
+            
+            // Add count indicator
+            const countBadge = document.createElement('span');
+            countBadge.style.cssText = `
+                background: rgba(255,255,255,0.2);
+                padding: 5px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-left: 5px;
+            `;
+            countBadge.textContent = `(${this.availableSets.length} sets)`;
+            setsContainer.appendChild(countBadge);
+        } else {
+            // Adviser: Show individual set badges
+            this.availableSets.forEach(set => {
+                const badge = document.createElement('span');
+                badge.style.cssText = `
+                    background: rgba(255,255,255,0.3);
+                    padding: 5px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                `;
+                badge.textContent = set;
+                setsContainer.appendChild(badge);
+            });
+        }
+    }
+
     extractFilterOptions() {
         const events = new Set();
         const dates = new Set();
@@ -351,7 +427,6 @@ class ClassManagement {
     }
 
     populateFilterDropdowns() {
-        // Event Filter
         const eventFilter = document.getElementById('class-filter-event');
         if (eventFilter) {
             eventFilter.innerHTML = '<option value="all">All Events</option>';
@@ -363,7 +438,6 @@ class ClassManagement {
             });
         }
         
-        // Date Filter
         const dateFilter = document.getElementById('class-filter-date');
         if (dateFilter) {
             dateFilter.innerHTML = '<option value="all">All Dates</option>';
@@ -375,7 +449,6 @@ class ClassManagement {
             });
         }
         
-        // Set Filter
         const setFilter = document.getElementById('class-filter-set');
         if (setFilter) {
             setFilter.innerHTML = '<option value="">All Sets</option>';
@@ -391,10 +464,9 @@ class ClassManagement {
     updateInfoBadge() {
         const badge = document.getElementById('class-info-badge');
         if (badge && this.instructorInfo) {
-            const position = this.instructorInfo.position || '';
-            const isDean = position.toLowerCase().includes('dean');
+            const isDeanOrHead = this.instructorInfo.isDeanOrHead || false;
             
-            if (isDean) {
+            if (isDeanOrHead) {
                 badge.textContent = `${this.instructorInfo.department} - All Year Levels`;
             } else {
                 badge.textContent = `${this.instructorInfo.department} - ${this.instructorInfo.yearLevel}`;
@@ -410,35 +482,26 @@ class ClassManagement {
         const setFilter = document.getElementById('class-filter-set')?.value || '';
 
         this.filteredData = this.studentsData.filter(student => {
-            // Search filter
             const matchesSearch = !searchTerm || 
                 student.id.toLowerCase().includes(searchTerm) ||
                 student.name.toLowerCase().includes(searchTerm) ||
                 student.set.toLowerCase().includes(searchTerm);
             
-            // Status filter - UPDATED LOGIC FOR PRESENT/ABSENT
             let matchesStatus = true;
             if (statusFilter !== 'all') {
                 if (statusFilter === 'present') {
-                    // Present = has at least one attendance record with status "Present"
                     matchesStatus = student.attendance && 
                                   student.attendance.some(att => att.status === 'Present');
                 } else if (statusFilter === 'absent') {
-                    // Absent = has no "Present" attendance OR has "Absent" records
                     matchesStatus = !student.attendance || 
                                   student.attendance.length === 0 ||
                                   student.attendance.every(att => att.status !== 'Present');
                 }
             }
             
-            // Set filter
             const matchesSet = !setFilter || student.set === setFilter;
-            
-            // Event filter
             const matchesEvent = eventFilter === 'all' || 
                 (student.attendance && student.attendance.some(att => att.event === eventFilter));
-            
-            // Date filter
             const matchesDate = dateFilter === 'all' || 
                 (student.attendance && student.attendance.some(att => att.date === dateFilter));
             
@@ -533,7 +596,6 @@ class ClassManagement {
         const displayData = this.filteredData.length > 0 ? this.filteredData : this.studentsData;
         const totalStudents = displayData.length;
         
-        // Count students with at least one "Present" attendance
         const presentStudents = displayData.filter(s => 
             s.attendance && s.attendance.some(att => att.status === 'Present')
         ).length;
@@ -673,7 +735,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
-// Add CSS animation for toast notifications
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {

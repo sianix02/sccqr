@@ -4,6 +4,37 @@
         <p class="page-subtitle">View and manage your assigned students</p>
     </div>
     
+    <!-- Instructor Assignment Info Card -->
+    <div class="content-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #0066cc, #004080); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h3 style="margin: 0 0 10px 0; font-size: 18px;">Your Assignment</h3>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div>
+                        <span style="opacity: 0.9; font-size: 12px;">Position:</span>
+                        <strong id="instructor-position" style="display: block; font-size: 16px;">Loading...</strong>
+                    </div>
+                    <div>
+                        <span style="opacity: 0.9; font-size: 12px;">Department:</span>
+                        <strong id="instructor-department" style="display: block; font-size: 16px;">Loading...</strong>
+                    </div>
+                    <div>
+                        <span style="opacity: 0.9; font-size: 12px;">Year Level:</span>
+                        <strong id="instructor-year-level" style="display: block; font-size: 16px;">Loading...</strong>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span style="opacity: 0.9; font-size: 12px; display: block; margin-bottom: 5px;">Assigned Sets:</span>
+                <div id="instructor-assigned-sets" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 12px; font-size: 13px;">
+                        Loading...
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Search and Controls Section -->
     <div class="content-card" style="margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
@@ -32,7 +63,7 @@
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; padding-top: 15px; border-top: 1px solid #e0e0e0; align-items: center;">
             <span style="font-weight: 600; color: #666; font-size: 14px;">🔍 Filters:</span>
             
-            <!-- Status Filter - UPDATED LABELS -->
+            <!-- Status Filter -->
             <select id="class-filter-status" 
                     style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
                 <option value="all">All Students</option>

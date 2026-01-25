@@ -1,4 +1,4 @@
-<!-- Profile Modal - Complete Version -->
+<!-- Profile Modal - Complete Version with Read-only Fields -->
 <div class="modal-overlay" id="profile-modal-overlay">
     <div class="modal-container">
         <button class="modal-close" id="close-profile-modal" style="display: none;">&times;</button>
@@ -50,6 +50,11 @@
                     <label>Year Level Assigned</label>
                     <div class="info-value" id="display-year-level">-</div>
                 </div>
+
+                <div class="profile-info-item">
+                    <label>Assigned Sets</label>
+                    <div class="info-value" id="display-assigned-sets">-</div>
+                </div>
             </div>
 
             <div class="profile-actions">
@@ -76,32 +81,63 @@
                     <input type="text" id="last_name" name="last_name" required>
                 </div>
 
+                <!-- READ-ONLY FIELDS -->
                 <div class="form-group">
-                    <label for="department">Department *</label>
-                    <select id="department" name="department" required>
-                        <option value="">Select Department</option>
-                        <option value="BS Information Technology">BS Information Technology</option>
-                        <option value="BS Business Administration">BS Business Administration</option>
-                        <option value="BS Criminology">BS Criminology</option>
-                        <option value="BS Secondary Education">BS Secondary Education</option>
-                        <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
-                    </select>
+                    <label for="department_readonly">Department</label>
+                    <input type="text" id="department_readonly" name="department_readonly" readonly 
+                           style="background: #f5f5f5; cursor: not-allowed; color: #666;">
+                    <input type="hidden" id="department" name="department">
+                    <small style="color: #666; font-size: 11px; margin-top: 3px; display: block;">
+                        <i>🔒 Admin assigned - Cannot be edited</i>
+                    </small>
                 </div>
 
                 <div class="form-group">
-                    <label for="year_level">Year Level Assigned *</label>
-                    <select id="year_level" name="year_level" required>
-                        <option value="">Select Year Level</option>
-                        <option value="1st Year">1st Year</option>
-                        <option value="2nd Year">2nd Year</option>
-                        <option value="3rd Year">3rd Year</option>
-                        <option value="4th Year">4th Year</option>
-                    </select>
+                    <label for="year_level_readonly">Year Level Assigned</label>
+                    <input type="text" id="year_level_readonly" name="year_level_readonly" readonly 
+                           style="background: #f5f5f5; cursor: not-allowed; color: #666;">
+                    <input type="hidden" id="year_level" name="year_level">
+                    <small style="color: #666; font-size: 11px; margin-top: 3px; display: block;">
+                        <i>🔒 Admin assigned - Cannot be edited</i>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="position_readonly">Position</label>
+                    <input type="text" id="position_readonly" name="position_readonly" readonly 
+                           style="background: #f5f5f5; cursor: not-allowed; color: #666;">
+                    <input type="hidden" id="position" name="position">
+                    <small style="color: #666; font-size: 11px; margin-top: 3px; display: block;">
+                        <i>🔒 Admin assigned - Cannot be edited</i>
+                    </small>
                 </div>
             </div>
 
+            <!-- Assigned Sets Display (Full Width) -->
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="assigned_sets_display">Assigned Sets</label>
+                <div id="assigned_sets_display" style="
+                    padding: 12px;
+                    background: #f5f5f5;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    min-height: 45px;
+                    color: #666;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    align-items: center;
+                ">
+                    <span style="color: #999;">No sets assigned</span>
+                </div>
+                <input type="hidden" id="assigned_sets" name="assigned_sets">
+                <small style="color: #666; font-size: 11px; margin-top: 3px; display: block;">
+                    <i>🔒 Admin assigned - Cannot be edited</i>
+                </small>
+            </div>
+
             <div class="form-note">
-                <strong>Note:</strong> Position is assigned by the administrator and cannot be edited.
+                <strong>Note:</strong> Position, Department, Year Level, and Assigned Sets are assigned by the administrator and cannot be edited.
             </div>
 
             <div class="profile-actions">
@@ -138,7 +174,7 @@
     background: white;
     border-radius: 16px;
     padding: 30px;
-    max-width: 600px;
+    max-width: 700px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
@@ -216,7 +252,7 @@
 
 .profile-info-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -242,6 +278,18 @@
     font-size: 16px;
     color: #333;
     font-weight: 500;
+}
+
+.set-badge {
+    display: inline-block;
+    background: #0066cc;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 5px;
+    margin-bottom: 5px;
 }
 
 .form-grid {
@@ -276,6 +324,12 @@
 .form-group select:focus {
     outline: none;
     border-color: #0066cc;
+}
+
+.form-group input[readonly] {
+    background: #f5f5f5;
+    cursor: not-allowed;
+    color: #666;
 }
 
 .form-note {
@@ -331,6 +385,10 @@
 
 @media (max-width: 768px) {
     .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-info-grid {
         grid-template-columns: 1fr;
     }
     

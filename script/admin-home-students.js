@@ -1,6 +1,6 @@
 // ============================================================
-// ADMIN-HOME-STUDENTS.JS - Student Management Module
-// Part 2: Complete student management functionality
+// ADMIN-HOME-STUDENTS.JS - Complete with Pagination
+// Student Management Module - Full Implementation
 // ============================================================
 
 // ============================================================
@@ -12,10 +12,23 @@ let currentEditingStudent = null;
 let studentToArchive = null;
 let isLoadingStudents = false;
 let currentFilters = {
-    status: 'all',  // 'active', 'inactive', 'archived', 'all'
+    status: 'all',
     course: 'all',
     year: 'all',
     search: ''
+};
+
+// ============================================================
+// PAGINATION VARIABLES
+// ============================================================
+
+let pagination = {
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalPages: 1,
+    totalItems: 0,
+    startIndex: 0,
+    endIndex: 0
 };
 
 // ============================================================
@@ -29,9 +42,252 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeStudentManagement() {
-    console.log('🎓 Initializing Student Management...');
+    console.log('🎓 Initializing Student Management with Pagination...');
+    initializePaginationControls();
     loadStudentsFromDatabase();
     attachStudentEventListeners();
+}
+
+// ============================================================
+// PAGINATION INITIALIZATION
+// ============================================================
+
+function initializePaginationControls() {
+    console.log('📄 Initializing pagination controls...');
+    
+    const tableCard = document.querySelector('#students .content-card:last-child');
+    if (!tableCard) {
+        console.warn('⚠️ Table card not found');
+        return;
+    }
+    
+    if (document.getElementById('pagination-container')) {
+        console.log('ℹ️ Pagination already initialized');
+        return;
+    }
+    
+    const paginationHTML = `
+        <div id="pagination-container" style="margin-top: 20px; padding: 20px; border-top: 2px solid #e0e0e0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <!-- Items per page selector -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="items-per-page" style="color: #666; font-size: 14px;">Show:</label>
+                    <select id="items-per-page" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; cursor: pointer;">
+                        <option value="5">5 per page</option>
+                        <option value="10" selected>10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="all">All students</option>
+                    </select>
+                </div>
+                
+                <!-- Pagination info -->
+                <div id="pagination-info" style="color: #666; font-size: 14px; font-weight: 500;">
+                    Showing 0-0 of 0 students
+                </div>
+                
+                <!-- Pagination controls -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="first-page-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" disabled>
+                        ⏮️ First
+                    </button>
+                    <button id="prev-page-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" disabled>
+                        ◀️ Prev
+                    </button>
+                    
+                    <div id="page-numbers" style="display: flex; gap: 5px; align-items: center;">
+                        <!-- Page numbers will be inserted here -->
+                    </div>
+                    
+                    <button id="next-page-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" disabled>
+                        Next ▶️
+                    </button>
+                    <button id="last-page-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 14px;" disabled>
+                        Last ⏭️
+                    </button>
+                </div>
+                
+                <!-- Jump to page -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label for="jump-to-page" style="color: #666; font-size: 14px;">Go to:</label>
+                    <input type="number" id="jump-to-page" min="1" placeholder="Page" 
+                           style="width: 70px; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; text-align: center;">
+                    <button id="jump-page-btn" class="btn" style="padding: 8px 12px; font-size: 14px;">
+                        Go
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    tableCard.insertAdjacentHTML('beforeend', paginationHTML);
+    attachPaginationEventListeners();
+    console.log('✅ Pagination controls created');
+}
+
+function attachPaginationEventListeners() {
+    const itemsPerPageSelect = document.getElementById('items-per-page');
+    if (itemsPerPageSelect) {
+        itemsPerPageSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value === 'all') {
+                pagination.itemsPerPage = Infinity;
+            } else {
+                pagination.itemsPerPage = parseInt(value);
+            }
+            pagination.currentPage = 1;
+            renderStudentsTable();
+        });
+    }
+    
+    const firstPageBtn = document.getElementById('first-page-btn');
+    const prevPageBtn = document.getElementById('prev-page-btn');
+    const nextPageBtn = document.getElementById('next-page-btn');
+    const lastPageBtn = document.getElementById('last-page-btn');
+    
+    if (firstPageBtn) firstPageBtn.addEventListener('click', () => goToPage(1));
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => goToPage(pagination.currentPage - 1));
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => goToPage(pagination.currentPage + 1));
+    if (lastPageBtn) lastPageBtn.addEventListener('click', () => goToPage(pagination.totalPages));
+    
+    const jumpToPageInput = document.getElementById('jump-to-page');
+    const jumpPageBtn = document.getElementById('jump-page-btn');
+    
+    if (jumpPageBtn) {
+        jumpPageBtn.addEventListener('click', () => {
+            if (jumpToPageInput) {
+                const pageNum = parseInt(jumpToPageInput.value);
+                if (pageNum >= 1 && pageNum <= pagination.totalPages) {
+                    goToPage(pageNum);
+                    jumpToPageInput.value = '';
+                } else {
+                    showToast('Invalid page number', 'error');
+                }
+            }
+        });
+    }
+    
+    if (jumpToPageInput) {
+        jumpToPageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                jumpPageBtn.click();
+            }
+        });
+    }
+}
+
+function goToPage(pageNumber) {
+    if (pageNumber < 1 || pageNumber > pagination.totalPages) {
+        return;
+    }
+    
+    pagination.currentPage = pageNumber;
+    renderStudentsTable();
+    
+    const studentsPage = document.getElementById('students');
+    if (studentsPage) {
+        studentsPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function updatePaginationControls(filteredData) {
+    const totalItems = filteredData.length;
+    const itemsPerPage = pagination.itemsPerPage === Infinity ? totalItems : pagination.itemsPerPage;
+    const totalPages = itemsPerPage === totalItems ? 1 : Math.ceil(totalItems / itemsPerPage);
+    
+    pagination.totalItems = totalItems;
+    pagination.totalPages = totalPages;
+    
+    if (pagination.currentPage > totalPages) {
+        pagination.currentPage = Math.max(1, totalPages);
+    }
+    
+    pagination.startIndex = (pagination.currentPage - 1) * itemsPerPage;
+    pagination.endIndex = Math.min(pagination.startIndex + itemsPerPage, totalItems);
+    
+    const paginationInfo = document.getElementById('pagination-info');
+    if (paginationInfo) {
+        if (totalItems === 0) {
+            paginationInfo.textContent = 'No students to display';
+        } else if (pagination.itemsPerPage === Infinity) {
+            paginationInfo.textContent = `Showing all ${totalItems} students`;
+        } else {
+            paginationInfo.textContent = `Showing ${pagination.startIndex + 1}-${pagination.endIndex} of ${totalItems} students`;
+        }
+    }
+    
+    const firstPageBtn = document.getElementById('first-page-btn');
+    const prevPageBtn = document.getElementById('prev-page-btn');
+    const nextPageBtn = document.getElementById('next-page-btn');
+    const lastPageBtn = document.getElementById('last-page-btn');
+    
+    const isFirstPage = pagination.currentPage === 1;
+    const isLastPage = pagination.currentPage === totalPages || totalPages === 0;
+    
+    if (firstPageBtn) firstPageBtn.disabled = isFirstPage;
+    if (prevPageBtn) prevPageBtn.disabled = isFirstPage;
+    if (nextPageBtn) nextPageBtn.disabled = isLastPage;
+    if (lastPageBtn) lastPageBtn.disabled = isLastPage;
+    
+    updatePageNumbers();
+}
+
+function updatePageNumbers() {
+    const pageNumbersContainer = document.getElementById('page-numbers');
+    if (!pageNumbersContainer) return;
+    
+    const totalPages = pagination.totalPages;
+    const currentPage = pagination.currentPage;
+    
+    pageNumbersContainer.innerHTML = '';
+    
+    if (pagination.itemsPerPage === Infinity || totalPages <= 1) {
+        return;
+    }
+    
+    let pagesToShow = [];
+    
+    if (totalPages <= 7) {
+        pagesToShow = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+        pagesToShow.push(1);
+        
+        if (currentPage > 3) {
+            pagesToShow.push('...');
+        }
+        
+        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+            pagesToShow.push(i);
+        }
+        
+        if (currentPage < totalPages - 2) {
+            pagesToShow.push('...');
+        }
+        
+        pagesToShow.push(totalPages);
+    }
+    
+    pagesToShow.forEach(page => {
+        if (page === '...') {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.cssText = 'padding: 8px 4px; color: #666;';
+            pageNumbersContainer.appendChild(ellipsis);
+        } else {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = page;
+            pageBtn.className = page === currentPage ? 'btn' : 'btn btn-secondary';
+            pageBtn.style.cssText = `
+                padding: 8px 14px;
+                font-size: 14px;
+                min-width: 40px;
+                ${page === currentPage ? 'font-weight: 600;' : ''}
+            `;
+            pageBtn.onclick = () => goToPage(page);
+            pageNumbersContainer.appendChild(pageBtn);
+        }
+    });
 }
 
 // ============================================================
@@ -94,6 +350,7 @@ async function loadStudentsFromDatabase() {
                     name: student.name,
                     first_name: student.first_name,
                     last_name: student.last_name,
+                    middle_initial: student.middle_initial,
                     course: student.course,
                     set: student.set,
                     year: student.year,
@@ -103,7 +360,7 @@ async function loadStudentsFromDatabase() {
                     archive_reason: student.archive_reason,
                     absentCount: student.absentCount || 0,
                     stats: student.stats,
-                    attendance: student.attendance
+                    attendance: student.attendance || []
                 };
             });
             
@@ -113,6 +370,8 @@ async function loadStudentsFromDatabase() {
                 inactive: studentsData.filter(s => s.status === 'Inactive' && !s.is_archived).length,
                 archived: studentsData.filter(s => s.is_archived).length
             });
+            
+            pagination.currentPage = 1;
             
             populateCourseFilter();
             renderStudentsTable();
@@ -162,7 +421,6 @@ function populateCourseFilter() {
 function applyFilters() {
     let filteredData = [...studentsData];
     
-    // Apply status/archive filter
     if (currentFilters.status === 'archived') {
         filteredData = filteredData.filter(s => s.is_archived === true);
     } else if (currentFilters.status === 'active') {
@@ -170,7 +428,6 @@ function applyFilters() {
     } else if (currentFilters.status === 'inactive') {
         filteredData = filteredData.filter(s => s.status === 'Inactive' && !s.is_archived);
     }
-    // 'all' shows everything
     
     if (currentFilters.course !== 'all') {
         filteredData = filteredData.filter(s => s.course === currentFilters.course);
@@ -186,6 +443,7 @@ function applyFilters() {
             return student.id.toString().toLowerCase().includes(searchTerm) ||
                    student.name.toLowerCase().includes(searchTerm) ||
                    student.course.toLowerCase().includes(searchTerm) ||
+                   (student.set && student.set.toLowerCase().includes(searchTerm)) ||
                    student.year.toLowerCase().includes(searchTerm);
         });
     }
@@ -202,8 +460,8 @@ function applyFilters() {
         if (currentFilters.search) parts.push(`Search: "${currentFilters.search}"`);
         
         filterInfo.textContent = parts.length > 0 
-            ? `Showing ${filteredData.length} students (${parts.join(', ')})`
-            : `Showing all ${filteredData.length} students`;
+            ? `Filters: ${parts.join(', ')}`
+            : '';
     }
     
     return filteredData;
@@ -278,11 +536,11 @@ function calculateAttendanceRate(student) {
 }
 
 // ============================================================
-// TABLE RENDERING
+// TABLE RENDERING WITH PAGINATION
 // ============================================================
 
 function renderStudentsTable() {
-    console.log('🎨 Rendering students table...');
+    console.log('🎨 Rendering students table with pagination...');
     
     let data = applyFilters();
     
@@ -290,6 +548,10 @@ function renderStudentsTable() {
     if (sortSelect && sortSelect.value) {
         data = sortStudents(sortSelect.value, data);
     }
+    
+    updatePaginationControls(data);
+    
+    const paginatedData = data.slice(pagination.startIndex, pagination.endIndex);
     
     const tbody = document.getElementById('students-table-body');
     
@@ -310,9 +572,9 @@ function renderStudentsTable() {
         return;
     }
     
-    console.log('📊 Rendering', data.length, 'students');
+    console.log(`📊 Rendering ${paginatedData.length} students (page ${pagination.currentPage}/${pagination.totalPages})`);
     
-    tbody.innerHTML = data.map(student => {
+    tbody.innerHTML = paginatedData.map(student => {
         const stats = student.stats || {};
         const totalEvents = stats.total || 0;
         const presentCount = stats.present || 0;
@@ -322,19 +584,16 @@ function renderStudentsTable() {
         const attendanceRate = totalEvents > 0 ? Math.round((attendedCount / totalEvents) * 100) : 0;
         
         const statusColor = student.status === 'Active' ? '#28a745' : '#dc3545';
-        const statusIcon = student.status === 'Active' ? '✔' : '⚠️';
+        const statusIcon = student.status === 'Active' ? '✓' : '⚠️';
         
-        // Determine what actions to show
         let actionButtons = '';
         
         if (student.is_archived) {
-            // ARCHIVED: Only show View and Restore
             actionButtons = `
                 <button class="btn" style="font-size: 11px; padding: 6px 10px;" onclick="viewStudentDetails('${student.id}')">👁️ View</button>
                 <button class="btn" style="font-size: 11px; padding: 6px 10px; background: #28a745;" onclick="toggleArchiveStudent('${student.id}')">♻️ Restore</button>
             `;
         } else {
-            // NOT ARCHIVED: Show full actions (regardless of Active/Inactive status)
             actionButtons = `
                 <button class="btn" style="font-size: 11px; padding: 6px 10px;" onclick="viewStudentDetails('${student.id}')">👁️ View</button>
                 <button class="btn" style="font-size: 11px; padding: 6px 10px; background: #ffc107;" onclick="editStudent('${student.id}')">✏️ Edit</button>
@@ -351,7 +610,7 @@ function renderStudentsTable() {
                         ${student.course}
                     </span>
                 </td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.set}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.set || 'N/A'}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${student.year}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -380,7 +639,7 @@ function renderStudentsTable() {
         `;
     }).join('');
     
-    console.log('✅ Table rendered');
+    console.log('✅ Table rendered with pagination');
 }
 
 function updateStudentStats() {
@@ -445,6 +704,7 @@ function attachStudentEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentFilters.search = e.target.value;
+            pagination.currentPage = 1;
             renderStudentsTable();
         });
     }
@@ -452,6 +712,7 @@ function attachStudentEventListeners() {
     if (statusFilter) {
         statusFilter.addEventListener('change', (e) => {
             currentFilters.status = e.target.value;
+            pagination.currentPage = 1;
             renderStudentsTable();
         });
     }
@@ -459,6 +720,7 @@ function attachStudentEventListeners() {
     if (courseFilter) {
         courseFilter.addEventListener('change', (e) => {
             currentFilters.course = e.target.value;
+            pagination.currentPage = 1;
             renderStudentsTable();
         });
     }
@@ -466,12 +728,16 @@ function attachStudentEventListeners() {
     if (yearFilter) {
         yearFilter.addEventListener('change', (e) => {
             currentFilters.year = e.target.value;
+            pagination.currentPage = 1;
             renderStudentsTable();
         });
     }
     
     if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => sortStudents(e.target.value));
+        sortSelect.addEventListener('change', (e) => {
+            sortStudents(e.target.value);
+            pagination.currentPage = 1;
+        });
     }
     
     if (refreshBtn) {
@@ -550,7 +816,7 @@ function openStudentModal(student = null) {
         if (middleInitialInput) middleInitialInput.value = student.middle_initial || '';
         if (lastNameInput) lastNameInput.value = student.last_name || '';
         if (courseInput) courseInput.value = student.course;
-        if (setInput) setInput.value = student.set;
+        if (setInput) setInput.value = student.set || '';
         if (yearInput) yearInput.value = student.year;
     } else {
         if (title) title.textContent = 'Add New Student';
@@ -617,7 +883,6 @@ async function saveStudent() {
     try {
         const submitBtn = document.querySelector('#student-form button[type="submit"]');
         if (submitBtn) {
-            const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = currentEditingStudent ? 'Updating...' : 'Adding...';
         }
@@ -665,7 +930,7 @@ window.viewStudentDetails = function(studentId) {
         'detail-student-id': student.id,
         'detail-student-name': student.name,
         'detail-student-course': student.course,
-        'detail-student-set': student.set,
+        'detail-student-set': student.set || 'N/A',
         'detail-student-year': student.year
     };
     
@@ -696,7 +961,7 @@ window.viewStudentDetails = function(studentId) {
     
     const historyBody = document.getElementById('attendance-history-body');
     if (historyBody) {
-        if (student.attendance.length === 0) {
+        if (!student.attendance || student.attendance.length === 0) {
             historyBody.innerHTML = `
                 <tr>
                     <td colspan="5" style="padding: 20px; text-align: center; color: #666;">
@@ -757,143 +1022,221 @@ function closeDetailsModal() {
 window.toggleArchiveStudent = function(studentId) {
     const student = studentsData.find(s => s.id === studentId);
     if (!student) return;
+    
     studentToArchive = student;
-const modal = document.getElementById('archive-modal');
-
-if (!modal) {
-    console.error('Archive modal not found');
-    return;
-}
-
-const nameEl = document.getElementById('archive-student-name');
-const confirmBtn = document.getElementById('confirm-archive');
-const title = modal.querySelector('h3');
-const message = modal.querySelector('p');
-
-if (student.is_archived) {
-    // RESTORE
-    if (title) title.textContent = '♻️ Restore Student';
-    if (message) message.textContent = 'This will restore the student and mark them as Active again.';
-    if (confirmBtn) {
-        confirmBtn.textContent = 'Restore';
-        confirmBtn.style.background = '#28a745';
-    }
-} else {
-    // ARCHIVE
-    if (title) title.textContent = '📦 Archive Student';
-    if (message) message.textContent = 'This will archive the student. They will no longer appear in active lists but data will be preserved.';
-    if (confirmBtn) {
-        confirmBtn.textContent = 'Archive';
-        confirmBtn.style.background = '#ffc107';
-    }
-}
-
-if (nameEl) nameEl.textContent = student.name;
-modal.style.display = 'block';
-}
-function closeArchiveModal() {
-const modal = document.getElementById('archive-modal');
-if (modal) modal.style.display = 'none';
-studentToArchive = null;
-}
-async function confirmArchive() {
-if (!studentToArchive) {
-showToast('No student selected', 'error');
-return;
-}
-const confirmBtn = document.getElementById('confirm-archive');
-const originalText = confirmBtn ? confirmBtn.textContent : 'Archive';
-
-const studentId = studentToArchive.id;
-const studentName = studentToArchive.name;
-const isArchiving = !studentToArchive.is_archived;
-
-try {
-    if (confirmBtn) {
-        confirmBtn.disabled = true;
-        const actionText = isArchiving ? 'Archiving' : 'Restoring';
-        confirmBtn.textContent = `${actionText}...`;
+    const modal = document.getElementById('archive-modal');
+    
+    if (!modal) {
+        console.error('Archive modal not found');
+        return;
     }
     
-    const apiUrl = isArchiving ? '../../api/archive_student.php' : '../../api/restore_student.php';
+    const nameEl = document.getElementById('archive-student-name');
+    const confirmBtn = document.getElementById('confirm-archive');
+    const title = modal.querySelector('h3');
+    const message = modal.querySelector('p');
     
-    const requestData = {
-        student_id: studentId,
-        reason: isArchiving ? 'Manual archive' : undefined,
-        archived_by: 'Admin',
-        restored_by: isArchiving ? undefined : 'Admin',
-        notes: isArchiving ? 'Archived from student management' : 'Restored from archive'
-    };
-    
-    console.log('📤 Request:', apiUrl, requestData);
-    
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData)
-    });
-    
-    const result = await response.json();
-    console.log('✅ Response:', result);
-    
-    if (result.success) {
-        const action = isArchiving ? 'archived' : 'restored';
-        
-        closeArchiveModal();
-        studentToArchive = null;
-        
-        showToast(`Student ${action}! Reloading...`, 'success');
-        
-        studentsData = [];
-        await loadStudentsFromDatabase();
-        
-        showToast(`✅ Student ${action} successfully!`, 'success');
+    if (student.is_archived) {
+        if (title) title.textContent = '♻️ Restore Student';
+        if (message) message.textContent = 'This will restore the student and mark them as Active again.';
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Restore';
+            confirmBtn.style.background = '#28a745';
+        }
     } else {
-        throw new Error(result.message || `Failed to ${isArchiving ? 'archive' : 'restore'}`);
+        if (title) title.textContent = '📦 Archive Student';
+        if (message) message.textContent = 'This will archive the student. They will no longer appear in active lists but data will be preserved.';
+        if (confirmBtn) {
+            confirmBtn.textContent = 'Archive';
+            confirmBtn.style.background = '#ffc107';
+        }
     }
     
-} catch (error) {
-    console.error('❌ Error:', error);
-    showToast(`Error: ${error.message}`, 'error');
-} finally {
-    if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = originalText;
-    }
+    if (nameEl) nameEl.textContent = student.name;
+    modal.style.display = 'block';
 }
+
+function closeArchiveModal() {
+    const modal = document.getElementById('archive-modal');
+    if (modal) modal.style.display = 'none';
+    studentToArchive = null;
+}
+
+async function confirmArchive() {
+    if (!studentToArchive) {
+        showToast('No student selected', 'error');
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirm-archive');
+    const originalText = confirmBtn ? confirmBtn.textContent : 'Archive';
+    
+    const studentId = studentToArchive.id;
+    const isArchiving = !studentToArchive.is_archived;
+    
+    try {
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            const actionText = isArchiving ? 'Archiving' : 'Restoring';
+            confirmBtn.textContent = `${actionText}...`;
+        }
+        
+        const apiUrl = isArchiving ? '../../api/archive_student.php' : '../../api/restore_student.php';
+        
+        const requestData = {
+            student_id: studentId,
+            reason: isArchiving ? 'Manual archive' : undefined,
+            archived_by: 'Admin',
+            restored_by: isArchiving ? undefined : 'Admin',
+            notes: isArchiving ? 'Archived from student management' : 'Restored from archive'
+        };
+        
+        console.log('📤 Request:', apiUrl, requestData);
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+        
+        const result = await response.json();
+        console.log('✅ Response:', result);
+        
+        if (result.success) {
+            const action = isArchiving ? 'archived' : 'restored';
+            
+            closeArchiveModal();
+            studentToArchive = null;
+            
+            showToast(`Student ${action}! Reloading...`, 'success');
+            
+            studentsData = [];
+            await loadStudentsFromDatabase();
+            
+            showToast(`✅ Student ${action} successfully!`, 'success');
+        } else {
+            throw new Error(result.message || `Failed to ${isArchiving ? 'archive' : 'restore'}`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
+        }
+    }
 }
 
 // ============================================================
 // EXPORT FUNCTIONALITY
 // ============================================================
+
 function exportAllStudentsPDF() {
-const statusFilter = document.getElementById('filter-status');
-const courseFilter = document.getElementById('filter-course');
-const yearFilter = document.getElementById('filter-year');
-const sortSelect = document.getElementById('sort-students');
-const params = new URLSearchParams({
-    status: statusFilter ? statusFilter.value : 'active',
-    course: courseFilter ? courseFilter.value : 'all',
-    year: yearFilter ? yearFilter.value : 'all',
-    sort: sortSelect ? sortSelect.value : 'id-asc'
-});
-
-const url = `../../api/export_all_students_pdf.php?${params.toString()}`;
-
-console.log('📄 Exporting PDF:', url);
-showToast('Generating PDF report...', 'success');
-
-window.location.href = url;
+    const statusFilter = document.getElementById('filter-status');
+    const courseFilter = document.getElementById('filter-course');
+    const yearFilter = document.getElementById('filter-year');
+    const sortSelect = document.getElementById('sort-students');
+    
+    const params = new URLSearchParams({
+        status: statusFilter ? statusFilter.value : 'active',
+        course: courseFilter ? courseFilter.value : 'all',
+        year: yearFilter ? yearFilter.value : 'all',
+        sort: sortSelect ? sortSelect.value : 'id-asc'
+    });
+    
+    const url = `../../api/export_all_students_pdf.php?${params.toString()}`;
+    
+    console.log('📄 Exporting PDF:', url);
+    showToast('Generating PDF report...', 'success');
+    
+    window.location.href = url;
 }
+
 function exportStudentReport() {
-if (!window.currentViewingStudent) {
-showToast('No student selected', 'error');
-return;
+    if (!window.currentViewingStudent) {
+        showToast('No student selected', 'error');
+        return;
+    }
+    
+    const studentId = window.currentViewingStudent.id;
+    const url = `../../api/export_individual_student_pdf.php?student_id=${studentId}`;
+    
+    console.log('📄 Exporting individual PDF:', url);
+    showToast('Generating student report...', 'success');
+    
+    window.location.href = url;
 }
-const studentId = window.currentViewingStudent.id;
-const url = `../../api/export_individual_student_pdf.php?student_id=${studentId}`;
 
-console.log('📄 Exporting individual PDF:', url);
-showToast('Generating student report...', 'success');
+// ============================================================
+// FALLBACK TOAST FUNCTION (if not defined globally)
+// ============================================================
 
-window.location.href = url;}
+if (typeof showToast !== 'function') {
+    window.showToast = function(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        
+        // Create simple toast notification
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#0066cc'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 14px;
+            font-weight: 500;
+            max-width: 350px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    };
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ============================================================
+// END OF SCRIPT
+// ============================================================
+
+console.log('✅ Student Management Module with Pagination Loaded Successfully!');
