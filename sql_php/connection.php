@@ -14,4 +14,8 @@ if ($conn->connect_error){
 // echo "Successfully Connected";
 
 
+register_shutdown_function(function() {
+    echo '<script src="/script/admin-config.js"></script>';
+});
+
 ?>
